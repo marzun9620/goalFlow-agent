@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import Index from "./_index";
 
 describe("Index route", () => {
@@ -11,7 +11,9 @@ describe("Index route", () => {
 	it("renders the description", () => {
 		render(<Index />);
 		expect(
-			screen.getByText(/LLM-assisted workload, scheduling, and goal management/i),
+			screen.getByText(
+				/LLM-assisted workload, scheduling, and goal management/i,
+			),
 		).toBeDefined();
 	});
 });
