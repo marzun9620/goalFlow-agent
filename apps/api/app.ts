@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 
 export function createApp() {
-  const app = new Hono();
+	const app = new Hono();
 
-  app.get("/health", (c) => c.json({ status: "ok" }));
+	app.get("/health", (c) => c.json({ status: "ok" }));
 
-  return app;
+	return app;
 }

@@ -1,9 +1,14 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "lib": ["ES2022"],
-    "moduleResolution": "Node"
-  },
-  "include": ["server.ts", "app.ts", "domain/**/*.ts", "use-cases/**/*.ts", "adapters/**/*.ts"]
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "dist",
+		"lib": ["ES2022"]
+	},
+	"include": [
+		"server.ts",
+		"app.ts",
+		"domain/**/*.ts",
+		"use-cases/**/*.ts",
+		"adapters/**/*.ts"
+	]
 }
