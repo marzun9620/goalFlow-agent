@@ -1,41 +1,41 @@
 {
-  "name": "goalflow-web",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=20.19.5"
-  },
-  "scripts": {
-    "dev": "react-router dev",
-    "build": "react-router build",
-    "start": "react-router serve",
-    "router:typegen": "react-router typegen",
-    "ci:check": "biome ci && tsc --noEmit",
-    "ci:build": "npm run build",
-    "ci:test": "vitest run",
-    "test": "vitest",
-    "prisma:generate": "prisma generate",
-    "biome:check:write": "biome check --write"
-  },
-  "dependencies": {
-    "@react-router/dev": "^7.0.0",
-    "@react-router/fs-routes": "^7.0.0",
-    "@react-router/node": "^7.0.0",
-    "@react-router/serve": "^7.0.0",
-    "@prisma/client": "^6.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router": "^7.0.0"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "@types/node": "^22.5.1",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "prisma": "^6.0.0",
-    "typescript": "^5.6.2",
-    "vitest": "^1.6.0",
-    "happy-dom": "^15.0.0"
-  }
+	"name": "goalflow-web",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=20.19.5"
+	},
+	"scripts": {
+		"dev": "react-router dev",
+		"build": "react-router build",
+		"start": "react-router serve",
+		"router:typegen": "react-router typegen",
+		"ci:check": "biome ci && tsc --noEmit",
+		"ci:build": "npm run build",
+		"ci:test": "vitest run",
+		"test": "vitest",
+		"prisma:generate": "prisma generate",
+		"biome:check:write": "biome check --write"
+	},
+	"dependencies": {
+		"@react-router/dev": "^7.0.0",
+		"@react-router/fs-routes": "^7.0.0",
+		"@react-router/node": "^7.0.0",
+		"@react-router/serve": "^7.0.0",
+		"@prisma/client": "^6.0.0",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"react-router": "^7.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.0",
+		"@types/node": "^22.5.1",
+		"@types/react": "^18.3.3",
+		"@types/react-dom": "^18.3.0",
+		"prisma": "^6.0.0",
+		"typescript": "^5.6.2",
+		"vitest": "^1.6.0",
+		"happy-dom": "^15.0.0"
+	}
 }
