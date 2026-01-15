@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx", "entry.server.tsx", "vite.config.ts", "react-router.config.ts"]
+}

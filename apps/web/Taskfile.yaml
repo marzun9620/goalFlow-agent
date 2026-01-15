@@ -1,0 +1,31 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install web dependencies
+    cmds:
+      - '[ -f package-lock.json ] && npm ci || npm install'
+  dev:
+    desc: Run web dev server
+    cmds:
+      - npm run dev
+  prisma:generate:
+    desc: Generate Prisma client
+    cmds:
+      - npm run prisma:generate
+  router:generate:
+    desc: Generate React Router types
+    cmds:
+      - npm run router:typegen
+  ci:check:
+    desc: Lint/typecheck
+    cmds:
+      - npm run ci:check
+  ci:build:
+    desc: Build web app
+    cmds:
+      - npm run ci:build
+  ci:test:
+    desc: Run frontend tests
+    cmds:
+      - npm run ci:test

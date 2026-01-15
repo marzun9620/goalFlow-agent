@@ -1,0 +1,23 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install API dependencies
+    cmds:
+      - '[ -f package-lock.json ] && npm ci || npm install'
+  dev:
+    desc: Run API dev server
+    cmds:
+      - npm run dev
+  ci:check:
+    desc: Lint/typecheck
+    cmds:
+      - npm run ci:check
+  ci:build:
+    desc: Build API
+    cmds:
+      - npm run ci:build
+  ci:test:
+    desc: Run API tests
+    cmds:
+      - npm run ci:test
