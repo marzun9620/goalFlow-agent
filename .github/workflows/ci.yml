@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  client:
+    name: Client CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Client
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.5"
+          cache: "npm"
+          cache-dependency-path: Client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Generate router types
+        run: npx react-router typegen
+
+      - name: Lint & Typecheck
+        run: npm run ci:check
+
+      - name: Build
+        run: npm run ci:build
+
+      - name: Test
+        run: npm run ci:test
+
+  server:
+    name: Server CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Server
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - "25431:5432"
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: app
+        options: >-
+          --health-cmd="pg_isready -U root -d app"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgres://root:root@localhost:25431/app?schema=public&sslmode=disable&connection_limit=10&pool_timeout=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.5"
+          cache: "npm"
+          cache-dependency-path: Server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Migrate database
+        run: npx atlas migrate apply --env local || echo "Skipping migration"
+
+      - name: Lint & Typecheck
+        run: npm run ci:check
+
+      - name: Build
+        run: npm run ci:build
+
+      - name: Test
+        run: npm run ci:test
