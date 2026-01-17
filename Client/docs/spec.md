@@ -4,22 +4,21 @@
 GoalFlow is an AI-driven workload and time-management assistant that matches tasks to people, plans schedules, tracks personal goals, and automates administrative actions. It pairs LLM reasoning with structured data (skills/capacity, calendars, project tools) and enforces guardrails (moderation, PII masking, human approvals). The implementation targets a TypeScript stack with a Hono HTTP layer and React Router v7 SSR web UI.
 
 ## Tech Baseline & Repository Layout
-- Runtime/tooling: Node 20.19.5 via `mise`; TypeScript; Biome 1.9.x; Vitest; Taskfile-driven commands; dotenv for config.
-- Web: React Router v7 SSR with file-based routes; loaders/actions call `.server` use cases; `react-router typegen` in CI.
-- API: Hono server exposing thin HTTP handlers that delegate to use cases.
-- Data: Prisma 6.x ORM backed by Postgres 15; schema managed via Atlas SQL migrations; vector store (Chroma/Faiss) for unstructured docs.
-- Suggested layout:
-  - `apps/web`: `app/routes/`, `app/.server/` (use cases/adapters), `app/domain/`, `app/components/`, `prisma/`.
-  - `apps/api`: `domain/`, `use-cases/`, `adapters/http/` (Hono routes), `adapters/db/` (Prisma/SQL ports).
-  - `database/`: `schema/schema.sql`, fixtures/seeds, Taskfile wrapping Atlas/psql.
-  - `.github/workflows/`: CI mirroring frontend flow, plus API job.
+- Runtime/tooling: Node 20.19.5 (pinned via `Server/mise.toml`); TypeScript; Biome 1.9.x; Vitest; Taskfile-driven commands; dotenv for config.
+- Web: React Router v7 SSR in `Client/` with file-based routes; loaders/actions stay thin and call use cases; `react-router typegen` optional via task.
+- API: Hono server in `Server/` exposing thin HTTP handlers that delegate to use cases.
+- Data: Prisma 6.x ORM backed by Postgres 15; schema lives in `Client/prisma/schema.prisma`; vector store (Chroma/Faiss) for unstructured docs.
+- Current layout:
+  - `Client/`: `app/routes/`, `app/domain/`, `app/components/`, `prisma/`, Taskfile for web commands.
+  - `Server/`: `app.ts`/`server.ts` Hono entry, `domain/`, `use-cases/`, `database/` (Atlas placeholder Taskfile), Taskfile for API commands.
+  - `.github/workflows/`: root CI covering Client/Server; additional Client-specific workflow in `Client/.github/workflows/ci.yml`.
 - Layering rules: domain (schemas, pure rules) → use-cases (orchestration) → ports (interfaces) → adapters (DB/HTTP/UI). Keep loaders/actions/handlers thin; avoid domain logic in transport.
 
 ## Environment & Dev Workflow
-- Postgres: Docker Compose service on `localhost:25431` (`root/root`, db `cic` or project-specific); default `DATABASE_URL=postgres://root:root@localhost:25431/<db>?schema=<schema>&sslmode=disable&connection_limit=10&pool_timeout=10`.
-- Env config: `.env.sample` with `PORT`, `DATABASE_URL`, `HONEYPOT_SECRET`, `SCHEDULER_SECRET`, `OPENAI_API_KEY`, etc.
-- Taskfile sketch (root): includes `app` and `database` Taskfiles; commands: `task up`, `task migrate:apply:auto`, `task prisma:generate`, `task app:router:generate`, `task app:run`, `task app:ci`, `task app:ci:check`, `task app:ci:build`, `task app:ci:test`.
-- Quickstart: `mise install` → `task up` → `task migrate:apply:auto` → `task app:setup` → `task prisma:generate` → `task app:router:generate` → `task app:run`.
+- Postgres: Docker Compose service on `localhost:25431` (`root/root`, db `app` by default); sample `DATABASE_URL=postgres://root:root@localhost:25431/app?schema=public&sslmode=disable&connection_limit=10&pool_timeout=10`.
+- Env config: `Server/.env.sample` with `PORT`, `DATABASE_URL`, `HONEYPOT_SECRET`, `SCHEDULER_SECRET`, `OPENAI_API_KEY`, `GCS_BUCKET`; server defaults to `PORT=4000` if unset.
+- Taskfiles: root includes `Client` (web) and `Server` (api) Taskfiles plus `Server/database` (Atlas placeholder). Commands include `task install`, `task up`/`down`, `task migrate:apply:auto`, `task prisma:generate`, `task router:generate`, `task run` (web dev), and CI helpers.
+- Quickstart: `mise install` (for Node/Task) → `task install` → `task up` → `task migrate:apply:auto` (placeholder) → `task prisma:generate` → `task router:generate` → `task run` for web; run API via `cd Server && npm run dev`.
 
 ## Core Features & Data Model
 - Skills & capacity mapping: structured table per person (id, skills[], proficiency, years, weekly_capacity_hours, availability, timezone).
@@ -59,8 +58,8 @@ GoalFlow is an AI-driven workload and time-management assistant that matches tas
 6) Deployment & scaling: containerize; logging/monitoring; access control; expand connectors; optional multi-agent split (scheduling vs goal planning) coordinated by a manager agent.
 
 ## CI/CD
-- GitHub Actions: checkout → install Task + Atlas → setup Node 20 with npm cache → start Postgres 15 service → `task app:ci` baseline → `task migrate:apply:auto` → `task prisma:generate` → `task app:router:generate` → `task app:ci:check|build|test`.
-- API job (parallel): `npm ci` in `apps/api`; `npx prisma generate --schema=../apps/web/prisma/schema.prisma`; `npx biome ci`; `npx tsc --noEmit`; `npx vitest run`.
+- Root GitHub Actions: security audit jobs for Client/Server; Client lint/typecheck/build/test (`npm run ci:*` with `npx prisma generate`); Server lint/build/test with Postgres service and optional Atlas migrate; npm caching across jobs.
+- Additional Client workflow (`Client/.github/workflows/ci.yml`): mirrors lint/typecheck/test/build for Client path changes.
 
 ## Deployment & Infra (GCP-friendly)
 - Cloud Run service for Hono server; images in Artifact Registry; env vars sourced from Secret Manager.
