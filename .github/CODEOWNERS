@@ -1,0 +1,8 @@
+# All files require review from @marzun9620
+* @marzun9620
+
+# Client-specific paths
+Client/** @marzun9620
+
+# Server-specific paths
+Server/** @marzun9620
