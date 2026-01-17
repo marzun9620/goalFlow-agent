@@ -1,0 +1,11 @@
+version: "3"
+
+tasks:
+  schema:apply:auto:
+    desc: Apply Atlas migrations (placeholder)
+    cmds:
+      - 'echo "TODO: run atlas migrate apply"'
+  seed:
+    desc: Seed database fixtures (placeholder)
+    cmds:
+      - 'echo "TODO: seed fixtures"'

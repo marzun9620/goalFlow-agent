@@ -1,0 +1,70 @@
+version: "3"
+
+includes:
+  web:
+    taskfile: ./apps/web/Taskfile.yaml
+    dir: ./apps/web
+    optional: true
+  api:
+    taskfile: ./apps/api/Taskfile.yaml
+    dir: ./apps/api
+    optional: true
+  database:
+    taskfile: ./database/Taskfile.yaml
+    dir: ./database
+    optional: true
+
+tasks:
+  install:
+    desc: Install dependencies for web and api
+    cmds:
+      - task: web:install
+      - task: api:install
+  up:
+    desc: Start local Postgres via docker-compose
+    cmds:
+      - docker compose up -d postgres
+  down:
+    desc: Stop local Postgres
+    cmds:
+      - docker compose down
+  migrate:apply:auto:
+    desc: Apply Atlas migrations
+    cmds:
+      - task: database:schema:apply:auto
+  prisma:generate:
+    desc: Generate Prisma client (shared schema)
+    cmds:
+      - task: web:prisma:generate
+  router:generate:
+    desc: Generate React Router types
+    cmds:
+      - task: web:router:generate
+  run:
+    desc: Run web dev server
+    cmds:
+      - task: web:dev
+  ci:
+    desc: Combined CI entrypoint
+    cmds:
+      - task: migrate:apply:auto
+      - task: prisma:generate
+      - task: router:generate
+      - task: ci:check
+      - task: ci:build
+      - task: ci:test
+  ci:check:
+    desc: Lint/typecheck web and api
+    cmds:
+      - task: web:ci:check
+      - task: api:ci:check
+  ci:build:
+    desc: Build web and api
+    cmds:
+      - task: web:ci:build
+      - task: api:ci:build
+  ci:test:
+    desc: Run tests for web and api
+    cmds:
+      - task: web:ci:test
+      - task: api:ci:test

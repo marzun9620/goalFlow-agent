@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - "25431:5432"
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: app
+        options: >-
+          --health-cmd="pg_isready -U root -d app"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgres://root:root@localhost:25431/app?schema=public&sslmode=disable&connection_limit=10&pool_timeout=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: "3.45.4"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.5"
+          cache: "npm"
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            apps/api/package-lock.json
+
+      - name: Install web deps
+        run: npm ci || npm install
+        working-directory: apps/web
+
+      - name: Install api deps
+        run: npm ci || npm install
+        working-directory: apps/api
+
+      - name: Migrate database (placeholder)
+        run: task migrate:apply:auto
+
+      - name: Generate Prisma client
+        run: task prisma:generate
+
+      - name: Generate router types
+        run: task router:generate
+
+      - name: CI check
+        run: task ci:check
+
+      - name: CI build
+        run: task ci:build
+
+      - name: CI test
+        run: task ci:test
