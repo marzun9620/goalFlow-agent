@@ -1,0 +1,44 @@
+name: client-ci
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "Client/**"
+  pull_request:
+    paths:
+      - "Client/**"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Client
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.5"
+          cache: "npm"
+          cache-dependency-path: Client/package-lock.json
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Generate router types
+        run: npx react-router typegen
+
+      - name: Lint & Typecheck
+        run: npm run ci:check
+
+      - name: Build
+        run: npm run ci:build
+
+      - name: Test
+        run: npm run ci:test
