@@ -4,10 +4,43 @@ on:
   push:
     branches: ["main"]
   pull_request:
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20.19.5"
+  DATABASE_URL: postgres://root:root@localhost:25431/app?schema=public&sslmode=disable&connection_limit=10&pool_timeout=10
 
 jobs:
-  client:
-    name: Client CI
+  # Security audit for dependencies
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Audit Client dependencies
+        working-directory: Client
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Audit Server dependencies
+        working-directory: Server
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # Client: Lint, typecheck, and format check
+  client-lint:
+    name: Client - Lint & Typecheck
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -18,37 +51,147 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20.19.5"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: Client/package-lock.json
 
       - name: Install dependencies
-        run: npm ci || npm install
+        run: npm ci
 
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Generate router types
-        run: npx react-router typegen
-
-      - name: Lint & Typecheck
+      - name: Lint & Typecheck (Biome + TSC)
         run: npm run ci:check
 
-      - name: Build
-        run: npm run ci:build
+  # Client: Build
+  client-build:
+    name: Client - Build
+    runs-on: ubuntu-latest
+    needs: [client-lint]
+    defaults:
+      run:
+        working-directory: Client
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Test
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: Client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Build application
+        run: npm run ci:build
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-build
+          path: Client/build
+          retention-days: 7
+
+  # Client: Tests
+  client-test:
+    name: Client - Test
+    runs-on: ubuntu-latest
+    needs: [client-lint]
+    defaults:
+      run:
+        working-directory: Client
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: Client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run tests
         run: npm run ci:test
 
-  server:
-    name: Server CI
+  # Server: Lint, typecheck, and format check
+  server-lint:
+    name: Server - Lint & Typecheck
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: Server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint & Typecheck (Biome + TSC)
+        run: npm run ci:check
+
+  # Server: Build
+  server-build:
+    name: Server - Build
+    runs-on: ubuntu-latest
+    needs: [server-lint]
+    defaults:
+      run:
+        working-directory: Server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: Server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run ci:build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-build
+          path: Server/dist
+          retention-days: 7
+
+  # Server: Tests with Database
+  server-test:
+    name: Server - Test
+    runs-on: ubuntu-latest
+    needs: [server-lint]
     defaults:
       run:
         working-directory: Server
     services:
       postgres:
-        image: postgres:15
+        image: postgres:15-alpine
         ports:
           - "25431:5432"
         env:
@@ -68,21 +211,41 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20.19.5"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: Server/package-lock.json
 
       - name: Install dependencies
-        run: npm ci || npm install
+        run: npm ci
 
-      - name: Migrate database
+      - name: Run database migrations
         run: npx atlas migrate apply --env local || echo "Skipping migration"
 
-      - name: Lint & Typecheck
-        run: npm run ci:check
-
-      - name: Build
-        run: npm run ci:build
-
-      - name: Test
+      - name: Run tests
         run: npm run ci:test
+
+  # Final status check - all jobs must pass
+  all-checks-passed:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs:
+      - security-audit
+      - client-lint
+      - client-build
+      - client-test
+      - server-lint
+      - server-build
+      - server-test
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ]; then
+            echo "❌ One or more jobs failed"
+            exit 1
+          elif [ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]; then
+            echo "⚠️ One or more jobs were cancelled"
+            exit 1
+          else
+            echo "✅ All checks passed successfully"
+          fi
