@@ -2,16 +2,16 @@ version: "3"
 
 includes:
   web:
-    taskfile: ./apps/web/Taskfile.yaml
-    dir: ./apps/web
+    taskfile: ./Client/Taskfile.yaml
+    dir: ./Client
     optional: true
   api:
-    taskfile: ./apps/api/Taskfile.yaml
-    dir: ./apps/api
+    taskfile: ./Server/Taskfile.yaml
+    dir: ./Server
     optional: true
   database:
-    taskfile: ./database/Taskfile.yaml
-    dir: ./database
+    taskfile: ./Server/database/Taskfile.yaml
+    dir: ./Server/database
     optional: true
 
 tasks:
@@ -23,11 +23,11 @@ tasks:
   up:
     desc: Start local Postgres via docker-compose
     cmds:
-      - docker compose up -d postgres
+      - docker compose -f Server/docker-compose.yml up -d postgres
   down:
     desc: Stop local Postgres
     cmds:
-      - docker compose down
+      - docker compose -f Server/docker-compose.yml down
   migrate:apply:auto:
     desc: Apply Atlas migrations
     cmds:

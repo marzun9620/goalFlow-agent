@@ -14,7 +14,7 @@
 		"ci:build": "npm run build",
 		"ci:test": "vitest run",
 		"test": "vitest",
-		"prisma:generate": "prisma generate --schema=../web/prisma/schema.prisma",
+		"prisma:generate": "prisma generate --schema=../Client/prisma/schema.prisma",
 		"biome:check:write": "biome check --write"
 	},
 	"dependencies": {
