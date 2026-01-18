@@ -15,7 +15,7 @@ GoalFlow is an AI-driven workload and time-management assistant that matches tas
 - Layering rules: domain (schemas, pure rules) → use-cases (orchestration) → ports (interfaces) → adapters (DB/HTTP/UI). Keep loaders/actions/handlers thin; avoid domain logic in transport.
 
 ## Environment & Dev Workflow
-- Postgres: Docker Compose service on `localhost:25431` (`root/root`, db `app` by default); sample `DATABASE_URL=postgres://root:root@localhost:25431/app?schema=public&sslmode=disable&connection_limit=10&pool_timeout=10`.
+- Postgres: Docker Compose service on `localhost:25431` (`root/root`, db `app` by default); sample `DATABASE_URL=postgres://root:root@localhost:25431/app?sslmode=disable`.
 - Env config: `Server/.env.sample` with `PORT`, `DATABASE_URL`, `HONEYPOT_SECRET`, `SCHEDULER_SECRET`, `OPENAI_API_KEY`, `GCS_BUCKET`; server defaults to `PORT=4000` if unset.
 - Taskfiles: root includes `Client` (web) and `Server` (api) Taskfiles plus `Server/database` (Atlas placeholder). Commands include `task install`, `task up`/`down`, `task migrate:apply:auto`, `task prisma:generate`, `task router:generate`, `task run` (web dev), and CI helpers.
 - Quickstart: `mise install` (for Node/Task) → `task install` → `task up` → `task migrate:apply:auto` (placeholder) → `task prisma:generate` → `task router:generate` → `task run` for web; run API via `cd Server && npm run dev`.

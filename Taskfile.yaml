@@ -23,7 +23,7 @@ tasks:
   up:
     desc: Start local Postgres via docker-compose
     cmds:
-      - docker compose -f Server/docker-compose.yml up -d postgres
+      - docker compose -f Server/docker-compose.yml up -d goalflow-postgres
   down:
     desc: Stop local Postgres
     cmds:
@@ -36,6 +36,7 @@ tasks:
     desc: Generate Prisma client (shared schema)
     cmds:
       - task: web:prisma:generate
+      - task: api:prisma:generate
   router:generate:
     desc: Generate React Router types
     cmds:

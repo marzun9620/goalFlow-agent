@@ -1,11 +1,32 @@
 version: "3"
 
 tasks:
+  atlas:
+    internal: true
+    cmds:
+      - atlas {{.CLI_ARGS}}
+
   schema:apply:auto:
-    desc: Apply Atlas migrations (placeholder)
+    desc: Apply Atlas migrations to the target database
+    vars:
+      DB_URL: '{{default "postgres://root:root@localhost:25431/app?sslmode=disable" .DATABASE_URL}}'
     cmds:
-      - 'echo "TODO: run atlas migrate apply"'
+      - task: atlas
+        vars:
+          CLI_ARGS: 'migrate apply --dir "file://migrations" --url "{{.DB_URL}}"'
+
+  schema:status:
+    desc: Show pending Atlas migrations
+    vars:
+      DB_URL: '{{default "postgres://root:root@localhost:25431/app?sslmode=disable" .DATABASE_URL}}'
+    cmds:
+      - task: atlas
+        vars:
+          CLI_ARGS: 'migrate status --dir "file://migrations" --url "{{.DB_URL}}"'
+
   seed:
-    desc: Seed database fixtures (placeholder)
+    desc: Seed database fixtures
+    vars:
+      DB_URL: '{{default "postgres://root:root@localhost:25431/app?sslmode=disable" .DATABASE_URL}}'
     cmds:
-      - 'echo "TODO: seed fixtures"'
+      - psql "{{.DB_URL}}" -f fixtures/seed.sql

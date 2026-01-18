@@ -1,6 +1,18 @@
 version: "3"
 
 tasks:
+  prisma:generate:
+    desc: Generate Prisma client from the shared schema
+    env:
+      XDG_CACHE_HOME: ./.cache
+      PRISMA_ENGINES_CACHE_DIR: ./.cache/prisma
+      PRISMA_QUERY_ENGINE_LIBRARY: ./node_modules/@prisma/engines/libquery_engine-darwin-arm64.dylib.node
+      PRISMA_SCHEMA_ENGINE_BINARY: ./node_modules/@prisma/engines/schema-engine-darwin-arm64
+      PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING: "1"
+    cmds:
+      - mkdir -p .cache/prisma
+      - npm run prisma:generate
+
   install:
     desc: Install API dependencies
     cmds:
@@ -12,12 +24,15 @@ tasks:
   ci:check:
     desc: Lint/typecheck
     cmds:
+      - task: prisma:generate
       - npm run ci:check
   ci:build:
     desc: Build API
     cmds:
+      - task: prisma:generate
       - npm run ci:build
   ci:test:
     desc: Run API tests
     cmds:
+      - task: prisma:generate
       - npm run ci:test

@@ -1,87 +1,137 @@
--- Atlas-managed Postgres schema for GoalFlow core entities.
--- Generated as a starting point; adjust as models evolve.
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- CreateTable
+CREATE TABLE "Skill" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "level" TEXT,
+    "years" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-CREATE TABLE IF NOT EXISTS skills (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  level TEXT,
-  years SMALLINT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    CONSTRAINT "Skill_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS people (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  role TEXT,
-  timezone TEXT,
-  weekly_capacity_hours INTEGER,
-  current_load_hours INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- CreateTable
+CREATE TABLE "Person" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "role" TEXT,
+    "timezone" TEXT,
+    "weeklyCapacityHours" INTEGER,
+    "currentLoadHours" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Person_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS person_skills (
-  person_id UUID NOT NULL REFERENCES people (id) ON DELETE CASCADE,
-  skill_id UUID NOT NULL REFERENCES skills (id) ON DELETE CASCADE,
-  level TEXT,
-  years SMALLINT,
-  PRIMARY KEY (person_id, skill_id)
+-- CreateTable
+CREATE TABLE "PersonSkill" (
+    "personId" TEXT NOT NULL,
+    "skillId" TEXT NOT NULL,
+    "level" TEXT,
+    "years" INTEGER,
+
+    CONSTRAINT "PersonSkill_pkey" PRIMARY KEY ("personId","skillId")
 );
 
-CREATE TABLE IF NOT EXISTS tasks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  description TEXT,
-  priority TEXT,
-  effort_hours NUMERIC,
-  due_at TIMESTAMPTZ,
-  owner_id UUID REFERENCES people (id),
-  sensitivity_level TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- CreateTable
+CREATE TABLE "Task" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "priority" TEXT,
+    "effortHours" DECIMAL,
+    "dueAt" TIMESTAMP(3),
+    "ownerId" TEXT,
+    "sensitivityLevel" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS task_required_skills (
-  task_id UUID NOT NULL REFERENCES tasks (id) ON DELETE CASCADE,
-  skill_id UUID NOT NULL REFERENCES skills (id) ON DELETE CASCADE,
-  required_level TEXT,
-  PRIMARY KEY (task_id, skill_id)
+-- CreateTable
+CREATE TABLE "TaskRequiredSkill" (
+    "taskId" TEXT NOT NULL,
+    "skillId" TEXT NOT NULL,
+    "requiredLevel" TEXT,
+
+    CONSTRAINT "TaskRequiredSkill_pkey" PRIMARY KEY ("taskId","skillId")
 );
 
-CREATE TABLE IF NOT EXISTS task_assignments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  task_id UUID NOT NULL REFERENCES tasks (id) ON DELETE CASCADE,
-  person_id UUID NOT NULL REFERENCES people (id) ON DELETE CASCADE,
-  allocated_hours NUMERIC,
-  status TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (task_id, person_id)
+-- CreateTable
+CREATE TABLE "TaskAssignment" (
+    "id" TEXT NOT NULL,
+    "taskId" TEXT NOT NULL,
+    "personId" TEXT NOT NULL,
+    "allocatedHours" DECIMAL,
+    "status" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "TaskAssignment_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS goals (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id UUID REFERENCES people (id) ON DELETE SET NULL,
-  title TEXT NOT NULL,
-  milestones JSONB,
-  target_date DATE,
-  status TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- CreateTable
+CREATE TABLE "Goal" (
+    "id" TEXT NOT NULL,
+    "ownerId" TEXT,
+    "title" TEXT NOT NULL,
+    "milestones" JSONB,
+    "targetDate" DATE,
+    "status" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Goal_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS calendar_events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_id UUID NOT NULL REFERENCES people (id) ON DELETE CASCADE,
-  start_at TIMESTAMPTZ NOT NULL,
-  end_at TIMESTAMPTZ NOT NULL,
-  event_type TEXT,
-  external_id TEXT,
-  source TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- CreateTable
+CREATE TABLE "CalendarEvent" (
+    "id" TEXT NOT NULL,
+    "personId" TEXT NOT NULL,
+    "startAt" TIMESTAMP(3) NOT NULL,
+    "endAt" TIMESTAMP(3) NOT NULL,
+    "eventType" TEXT,
+    "externalId" TEXT,
+    "source" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CalendarEvent_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS idx_tasks_due_at ON tasks (due_at);
-CREATE INDEX IF NOT EXISTS idx_calendar_events_person_time ON calendar_events (person_id, start_at, end_at);
+-- CreateIndex
+CREATE UNIQUE INDEX "TaskAssignment_taskId_personId_key" ON "TaskAssignment"("taskId", "personId");
+
+-- CreateIndex
+CREATE INDEX "CalendarEvent_personId_startAt_endAt_idx" ON "CalendarEvent"("personId", "startAt", "endAt");
+
+-- AddForeignKey
+ALTER TABLE "PersonSkill" ADD CONSTRAINT "PersonSkill_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PersonSkill" ADD CONSTRAINT "PersonSkill_skillId_fkey" FOREIGN KEY ("skillId") REFERENCES "Skill"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Task" ADD CONSTRAINT "Task_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "Person"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskRequiredSkill" ADD CONSTRAINT "TaskRequiredSkill_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskRequiredSkill" ADD CONSTRAINT "TaskRequiredSkill_skillId_fkey" FOREIGN KEY ("skillId") REFERENCES "Skill"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskAssignment" ADD CONSTRAINT "TaskAssignment_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskAssignment" ADD CONSTRAINT "TaskAssignment_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Goal" ADD CONSTRAINT "Goal_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "Person"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
