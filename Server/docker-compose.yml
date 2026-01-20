@@ -1,7 +1,8 @@
 version: "3.9"
 
 services:
-  postgres:
+  goalflow-postgres:
+    container_name: goalFlow-postgres
     image: postgres:15
     restart: unless-stopped
     environment:
@@ -11,7 +12,7 @@ services:
     ports:
       - "25431:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - goalflow_postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  goalflow_postgres_data:
