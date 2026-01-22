@@ -1,0 +1,135 @@
+name: Snyk Security
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  snyk:
+    name: Snyk Scans (Code, OSS, IaC, Container)
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    # Make SNYK_TOKEN available to ALL subsequent run steps
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Secrets are not available for PRs from forks.
+      # This workflow skips Snyk scans in that case to avoid failing PR checks.
+      - name: Determine if PR is from fork
+        id: fork_check
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "is_fork=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_fork=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Explain skip (fork PR)
+        if: steps.fork_check.outputs.is_fork == 'true'
+        run: |
+          echo "Skipping Snyk scans because this is a PR from a fork and GitHub does not provide secrets to forked PR workflows."
+
+      # Setup Node for Snyk Open Source (dependency scanning)
+      - name: Setup Node
+        if: steps.fork_check.outputs.is_fork == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      # Install dependencies in monorepo subdirectories
+      - name: Install dependencies
+        if: steps.fork_check.outputs.is_fork == 'false'
+        run: |
+          if [ -d Client ] && [ -f Client/package-lock.json ]; then
+            echo "Installing Client dependencies..."
+            cd Client && npm ci && cd ..
+          fi
+          if [ -d Server ] && [ -f Server/package-lock.json ]; then
+            echo "Installing Server dependencies..."
+            cd Server && npm ci && cd ..
+          fi
+
+      - name: Set up Snyk CLI
+        if: steps.fork_check.outputs.is_fork == 'false'
+        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+
+      # (Optional) Fast sanity check that token is present (does not print token)
+      - name: Verify SNYK_TOKEN is present
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          if [ -z "${SNYK_TOKEN}" ]; then
+            echo "SNYK_TOKEN is missing. Add it in GitHub repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "SNYK_TOKEN is present."
+
+      # --- Snyk Code (SAST) -> SARIF for GitHub Code Scanning ---
+      - name: Snyk Code test (SARIF)
+        id: snyk_code
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          # Non-blocking by default; remove "|| true" to fail the job on findings/errors.
+          snyk code test --sarif > snyk-code.sarif || true
+
+          # Validate the SARIF file is valid JSON before attempting upload
+          if [ -s snyk-code.sarif ] && jq empty snyk-code.sarif 2>/dev/null; then
+            echo "sarif_valid=true" >> $GITHUB_OUTPUT
+            echo "Valid SARIF file generated."
+          else
+            echo "sarif_valid=false" >> $GITHUB_OUTPUT
+            echo "SARIF file is missing, empty, or invalid JSON. Skipping upload."
+            rm -f snyk-code.sarif
+          fi
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: steps.fork_check.outputs.is_fork == 'false' && steps.snyk_code.outputs.sarif_valid == 'true'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: snyk-code.sarif
+
+      # --- Snyk Open Source (SCA) ---
+      - name: Snyk Open Source monitor (all projects)
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          # Non-blocking by default
+          snyk monitor --all-projects || true
+
+      # --- Snyk Infrastructure as Code (IaC) ---
+      - name: Snyk IaC test and report
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          # Non-blocking by default
+          snyk iac test --report || true
+
+      # --- Container scan (uncomment when you have a Dockerfile) ---
+      # - name: Build Docker image
+      #   if: steps.fork_check.outputs.is_fork == 'false'
+      #   run: docker build -t goalflow-agent .
+      #
+      # - name: Snyk Container monitor
+      #   if: steps.fork_check.outputs.is_fork == 'false'
+      #   shell: bash
+      #   run: |
+      #     # Non-blocking by default
+      #     snyk container monitor goalflow-agent --file=Dockerfile || true
