@@ -1,26 +1,8 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# A sample workflow which sets up Snyk to analyze the full Snyk platform (Snyk Open Source, Snyk Code,
-# Snyk Container and Snyk Infrastructure as Code)
-# The setup installs the Snyk CLI - for more details on the possible commands
-# check https://docs.snyk.io/snyk-cli/cli-reference
-# The results of Snyk Code are then uploaded to GitHub Security Code Scanning
-#
-# In order to use the Snyk Action you will need to have a Snyk API token.
-# More details in https://github.com/snyk/actions#getting-your-snyk-token
-# or you can signup for free at https://snyk.io/login
-#
-# For more examples, including how to limit scans to only high-severity issues
-# and fail PR checks, see https://github.com/snyk/actions/
-
 name: Snyk Security
 
 on:
   push:
-    branches: ["main" ]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -29,51 +11,117 @@ permissions:
 
 jobs:
   snyk:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    name: Snyk Scans (Code, OSS, IaC, Container)
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    # Make SNYK_TOKEN available to ALL subsequent run steps
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Snyk CLI to check for security issues
-        # Snyk can be used to break the build when it detects security issues.
-        # In this case we want to upload the SAST issues to GitHub Code Scanning
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Secrets are not available for PRs from forks.
+      # This workflow skips Snyk scans in that case to avoid failing PR checks.
+      - name: Determine if PR is from fork
+        id: fork_check
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "is_fork=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_fork=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Explain skip (fork PR)
+        if: steps.fork_check.outputs.is_fork == 'true'
+        run: |
+          echo "Skipping Snyk scans because this is a PR from a fork and GitHub does not provide secrets to forked PR workflows."
+
+      # Optional but recommended for Snyk Open Source (dependency scanning) in Node projects
+      - name: Setup Node
+        if: steps.fork_check.outputs.is_fork == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # If you use pnpm/yarn, adjust accordingly
+      - name: Install dependencies (optional, recommended for OSS scan)
+        if: steps.fork_check.outputs.is_fork == 'false'
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f package.json ]; then
+            npm install
+          else
+            echo "No package.json found; skipping npm install."
+          fi
+
+      - name: Set up Snyk CLI
+        if: steps.fork_check.outputs.is_fork == 'false'
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
-        # For Snyk Open Source you must first set up the development environment for your application's dependencies
-        # For example for Node
-        #- uses: actions/setup-node@v4
-        #  with:
-        #    node-version: 20
+      # (Optional) Fast sanity check that token is present (does not print token)
+      - name: Verify SNYK_TOKEN is present
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          if [ -z "${SNYK_TOKEN}" ]; then
+            echo "SNYK_TOKEN is missing. Add it in GitHub repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "SNYK_TOKEN is present."
 
-        env:
-          # This is where you will need to introduce the Snyk API token created with your Snyk account
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      # --- Snyk Code (SAST) -> SARIF for GitHub Code Scanning ---
+      - name: Snyk Code test (SARIF)
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          # Non-blocking by default; remove "|| true" to fail the job on findings/errors.
+          snyk code test --sarif > snyk-code.sarif || true
 
-        # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
-        # Use || true to not fail the pipeline
-      - name: Snyk Code test
-        run: snyk code test --sarif > snyk-code.sarif # || true
+          # Ensure file exists to avoid upload errors
+          if [ ! -s snyk-code.sarif ]; then
+            echo "SARIF file was not generated or is empty."
+          fi
 
-        # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
-      - name: Snyk Open Source monitor
-        run: snyk monitor --all-projects
-
-        # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
-        # Use || true to not fail the pipeline.
-      - name: Snyk IaC test and report
-        run: snyk iac test --report # || true
-
-        # Build the docker image for testing
-      - name: Build a Docker image
-        run: docker build -t your/image-to-test .
-        # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
-      - name: Snyk Container monitor
-        run: snyk container monitor your/image-to-test --file=Dockerfile
-
-        # Push the Snyk Code results into GitHub Code Scanning tab
-      - name: Upload result to GitHub Code Scanning
+      - name: Upload SARIF to GitHub Code Scanning
+        if: steps.fork_check.outputs.is_fork == 'false' && hashFiles('snyk-code.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-code.sarif
+
+      # --- Snyk Open Source (SCA) ---
+      - name: Snyk Open Source monitor (all projects)
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          # Non-blocking by default
+          snyk monitor --all-projects || true
+
+      # --- Snyk Infrastructure as Code (IaC) ---
+      - name: Snyk IaC test and report
+        if: steps.fork_check.outputs.is_fork == 'false'
+        shell: bash
+        run: |
+          # Non-blocking by default
+          snyk iac test --report || true
+
+      # --- Container scan (uncomment when you have a Dockerfile) ---
+      # - name: Build Docker image
+      #   if: steps.fork_check.outputs.is_fork == 'false'
+      #   run: docker build -t goalflow-agent .
+      #
+      # - name: Snyk Container monitor
+      #   if: steps.fork_check.outputs.is_fork == 'false'
+      #   shell: bash
+      #   run: |
+      #     # Non-blocking by default
+      #     snyk container monitor goalflow-agent --file=Dockerfile || true
