@@ -1,8 +1,7 @@
-import * as S from "@effect/schema/Schema";
 import { HTTPException } from "hono/http-exception";
 import type { MiddlewareHandler } from "hono";
 import { randomUUID } from "node:crypto";
-import { ErrorResponseSchema } from "./domain/schemas.js";
+import type { ErrorResponse } from "./domain/schemas.js";
 
 type RequestContext = {
 	requestId: string;
@@ -51,7 +50,7 @@ export const errorHandlingMiddleware: MiddlewareHandler = async (c, next) => {
 		if (err instanceof HTTPException) {
 			return err.getResponse();
 		}
-		const body: S.Schema.To<typeof ErrorResponseSchema> = {
+		const body: ErrorResponse = {
 			error: err instanceof Error ? err.message : "Internal Server Error",
 			requestId: reqCtx?.requestId,
 		};

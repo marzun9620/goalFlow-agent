@@ -1,6 +1,5 @@
-import * as S from "@effect/schema/Schema";
 import { Hono } from "hono";
-import { HealthResponseSchema, VersionResponseSchema } from "./domain/schemas.js";
+import type { HealthResponse, VersionResponse } from "./domain/schemas.js";
 import {
 	authStubMiddleware,
 	errorHandlingMiddleware,
@@ -19,17 +18,11 @@ export function createApp() {
 	app.use("*", authStubMiddleware);
 	app.use("*", rateLimitStubMiddleware);
 
-	app.get("/health", (c) => {
-		const body: S.Schema.To<typeof HealthResponseSchema> = { status: "ok" };
-		return c.json(body, 200);
-	});
+	app.get("/health", (c) => c.json<HealthResponse>({ status: "ok" }, 200));
 
 	const require = createRequire(import.meta.url);
 	const { version } = require("./package.json") as { version: string };
-	app.get("/version", (c) => {
-		const body: S.Schema.To<typeof VersionResponseSchema> = { version };
-		return c.json(body, 200);
-	});
+	app.get("/version", (c) => c.json<VersionResponse>({ version }, 200));
 
 	return app;
 }
