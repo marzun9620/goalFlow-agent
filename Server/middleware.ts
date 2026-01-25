@@ -1,6 +1,6 @@
-import { HTTPException } from "hono/http-exception";
-import type { MiddlewareHandler } from "hono";
 import { randomUUID } from "node:crypto";
+import type { MiddlewareHandler } from "hono";
+import { HTTPException } from "hono/http-exception";
 import type { ErrorResponse } from "./domain/schemas.js";
 
 type RequestContext = {

@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { Hono } from "hono";
 import type { HealthResponse, VersionResponse } from "./domain/schemas.js";
 import {
@@ -7,7 +8,6 @@ import {
 	rateLimitStubMiddleware,
 	requestIdMiddleware,
 } from "./middleware.js";
-import { createRequire } from "node:module";
 
 export function createApp() {
 	const app = new Hono();
