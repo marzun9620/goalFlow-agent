@@ -14,7 +14,7 @@ declare module "hono" {
 	}
 }
 
-export const requestIdMiddleware: MiddlewareHandler = async (c, next) => {
+const requestId: MiddlewareHandler = async (c, next) => {
 	const headerId = c.req.header("x-request-id");
 	const requestId = headerId ?? randomUUID();
 	c.set("reqCtx", { requestId });
@@ -22,38 +22,62 @@ export const requestIdMiddleware: MiddlewareHandler = async (c, next) => {
 	c.header("x-request-id", requestId, { append: false });
 };
 
-export const loggerMiddleware: MiddlewareHandler = async (c, next) => {
+const logger: MiddlewareHandler = async (c, next) => {
 	const start = performance.now();
 	await next();
 	const elapsed = (performance.now() - start).toFixed(1);
 	const reqCtx = c.get("reqCtx");
+	// eslint-disable-next-line no-console
 	console.log(
 		`[${reqCtx?.requestId ?? "n/a"}] ${c.req.method} ${c.req.path} -> ${c.res.status} (${elapsed}ms)`,
 	);
 };
 
-export const authStubMiddleware: MiddlewareHandler = async (c, next) => {
+const authStub: MiddlewareHandler = async (c, next) => {
+	// Placeholder: in real flow, verify token and set user.
 	c.set("user", null);
 	await next();
 };
 
-export const rateLimitStubMiddleware: MiddlewareHandler = async (c, next) => {
+const rateLimitStub: MiddlewareHandler = async (c, next) => {
 	c.header("x-rate-limit-remaining", "stub");
 	await next();
 };
 
-export const errorHandlingMiddleware: MiddlewareHandler = async (c, next) => {
+const errorHandler: MiddlewareHandler = async (c, next) => {
 	try {
 		await next();
 	} catch (err) {
-		const reqCtx = c.get("reqCtx");
+		const requestId = c.get("reqCtx")?.requestId;
 		if (err instanceof HTTPException) {
 			return err.getResponse();
 		}
 		const body: ErrorResponse = {
 			error: err instanceof Error ? err.message : "Internal Server Error",
-			requestId: reqCtx?.requestId,
+			requestId,
 		};
 		return c.json(body, 500);
 	}
 };
+
+const onError: Parameters<MiddlewareHandler>[0]["onError"] = (err, c) => {
+	const requestId = c.get("reqCtx")?.requestId;
+	if (err instanceof HTTPException) {
+		return c.json(
+			{ error: err.message ?? "Internal Server Error", requestId },
+			err.status,
+		);
+	}
+	return c.json({ error: err.message ?? "Internal Server Error", requestId }, 500);
+};
+
+export function createRequestMiddlewares() {
+	return {
+		requestId,
+		logger,
+		authStub,
+		rateLimitStub,
+		errorHandler,
+		onError,
+	};
+}
