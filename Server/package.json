@@ -20,7 +20,9 @@
 	"dependencies": {
 		"@hono/node-server": "^1.19.9",
 		"@prisma/client": "^6.0.0",
-		"hono": "^4.6.6"
+		"hono": "^4.6.6",
+		"@effect/schema": "^1.0.8",
+		"effect": "^2.4.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.0",
