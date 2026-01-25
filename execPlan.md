@@ -3,13 +3,13 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-01-25)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture checked into `Server/database`; Dockerized Postgres task; atlas.hcl for CI/local apply; Prisma generate wired into Server GH Actions; root/Client/Server Taskfiles; GitHub Actions for Client/Server lint/build/test; Backend v2 CI workflow skeleton; migration/apply smoke + Prisma generate verified locally (see commands below).
-- Missing: Runtime DB wiring in Server, middleware, domain/use-case logic, connectors, guardrails, UI flows beyond landing page; backendv2 source/tests/compose stack.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture checked into `Server/database`; Dockerized Postgres task; atlas.hcl for CI/local apply; Prisma generate wired into Server GH Actions; root/Client/Server Taskfiles; GitHub Actions for Client/Server lint/build/test; Backend v2 CI workflow skeleton; migration/apply smoke + Prisma generate verified locally (see commands below); API scaffolding with request-id/logger/auth/rate-limit/error middleware, health/version routes, Effect Schema response types; Effect deps pinned (effect 3.x, @effect/schema 0.75.x) and package-lock refreshed.
+- Missing: Runtime DB wiring in Server, domain/use-case logic, connectors, guardrails, UI flows beyond landing page; backendv2 source/tests/compose stack.
 - Tests present: `Server/app.test.ts` (health), `Client/app/routes/_index.test.tsx` (landing). No integration/e2e.
 
 ## Progress tracker
 - [x] Commit 1 — Database foundations (schema, migration, seed, atlas.hcl, CI Prisma generate; migration apply + prisma generate run locally on 2026-01-25)
-- [ ] Commit 2 — API scaffolding & middleware
+- [x] Commit 2 — API scaffolding & middleware (middleware stack: request-id, logger, auth stub, rate-limit stub, error mapper; health/version routes; Effect Schema response types; tests added)
 - [ ] Commit 3 — Matching use case
 - [ ] Commit 4 — Scheduling use case
 - [ ] Commit 5 — Goal planning
@@ -24,7 +24,7 @@ Commit 1 — Database foundations
 - Tests: prisma generate smoke; migration apply locally. Ran `task up` then `DATABASE_URL=postgres://root:root@127.0.0.1:25431/app?sslmode=disable task migrate:apply:auto` (no pending migrations) and `cd Server && npm run prisma:generate` on 2026-01-25.
 
 Commit 2 — API scaffolding & middleware
-- Introduce shared domain types (TS/zod) and request/response schemas.
+- Introduce shared domain types (Effect Schema) and request/response schemas.
 - Add Hono middleware: auth stub, request-scoped logger/db, error mapper, rate limit placeholder, health/version routes.
 - Tests: unit tests for middleware; API health check.
 
