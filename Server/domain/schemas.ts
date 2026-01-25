@@ -1,17 +1,24 @@
 import * as S from "@effect/schema/Schema";
 
-export const HealthResponseSchema = S.struct({
-	status: S.literal("ok"),
+export const HealthResponseSchema = S.Struct({
+	status: S.Literal("ok"),
 });
-export type HealthResponse = S.Schema.To<typeof HealthResponseSchema>;
+export type HealthResponse = {
+	status: "ok";
+};
 
-export const VersionResponseSchema = S.struct({
-	version: S.string,
+export const VersionResponseSchema = S.Struct({
+	version: S.String,
 });
-export type VersionResponse = S.Schema.To<typeof VersionResponseSchema>;
+export type VersionResponse = {
+	version: string;
+};
 
-export const ErrorResponseSchema = S.struct({
-	error: S.string,
-	requestId: S.optional(S.string),
+export const ErrorResponseSchema = S.Struct({
+	error: S.String,
+	requestId: S.optional(S.String),
 });
-export type ErrorResponse = S.Schema.To<typeof ErrorResponseSchema>;
+export type ErrorResponse = {
+	error: string;
+	requestId?: string;
+};
