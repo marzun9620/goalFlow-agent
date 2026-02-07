@@ -3,6 +3,7 @@ export type SkillMatch = {
 	skillName: string;
 	requiredLevel?: string | null;
 	personLevel?: string | null;
+	priority?: "REQUIRED" | "PREFERRED" | "BONUS";
 	score: number;
 };
 

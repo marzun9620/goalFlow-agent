@@ -2,10 +2,14 @@
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateTable
+CREATE TYPE "SkillLevel" AS ENUM ('BEGINNER','JUNIOR','INTERMEDIATE','MID','SENIOR','EXPERT','PRINCIPAL');
+
+CREATE TYPE "SkillPriority" AS ENUM ('REQUIRED','PREFERRED','BONUS');
+
 CREATE TABLE "Skill" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "level" TEXT,
+    "level" "SkillLevel",
     "years" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -31,7 +35,7 @@ CREATE TABLE "Person" (
 CREATE TABLE "PersonSkill" (
     "personId" TEXT NOT NULL,
     "skillId" TEXT NOT NULL,
-    "level" TEXT,
+    "level" "SkillLevel",
     "years" INTEGER,
 
     CONSTRAINT "PersonSkill_pkey" PRIMARY KEY ("personId","skillId")
@@ -57,7 +61,8 @@ CREATE TABLE "Task" (
 CREATE TABLE "TaskRequiredSkill" (
     "taskId" TEXT NOT NULL,
     "skillId" TEXT NOT NULL,
-    "requiredLevel" TEXT,
+    "requiredLevel" "SkillLevel",
+    "priority" "SkillPriority" NOT NULL DEFAULT 'REQUIRED',
 
     CONSTRAINT "TaskRequiredSkill_pkey" PRIMARY KEY ("taskId","skillId")
 );
@@ -134,4 +139,3 @@ ALTER TABLE "Goal" ADD CONSTRAINT "Goal_ownerId_fkey" FOREIGN KEY ("ownerId") RE
 
 -- AddForeignKey
 ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
