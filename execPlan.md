@@ -3,8 +3,8 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-02-07)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
-- Missing: LLM integration; connectors; UI flows; Docker/deployment.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; LLM justification stub with guardrails (PII/toxicity checks, rate limit) and cost reporting; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
+- Missing: Connectors; UI flows; Docker/deployment.
 - Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing), `Server/use-cases/matching/matchEmployeeUseCase.test.ts` (matching scoring). No integration/e2e.
 
 ## Progress tracker
@@ -14,7 +14,7 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - [x] Commit 4 — Matching algorithm improvements (architectural fixes)
 - [x] Commit 5 — Scheduling use case
 - [x] Commit 6 — Goal planning
-- [ ] Commit 7 — LLM integration & guardrails
+- [x] Commit 7 — LLM integration & guardrails
 - [ ] Commit 8 — Connectors (calendar, messaging, project tools)
 - [ ] Commit 9 — Web UI flows
 - [ ] Commit 10 — CI/CD and ops hardening
@@ -121,25 +121,19 @@ interface Milestone {
 
 ---
 
-### Commit 7 — LLM integration & guardrails
+### Commit 7 — LLM integration & guardrails ✅
 Add AI-powered features with safety controls.
 
 **LLM Features**
-- [ ] Natural language justification for matching results
-  ```typescript
-  const justification = await llm.generate({
-    prompt: `Explain why ${person} is best for ${task}`,
-    context: { skillMatches, capacityScore }
-  });
-  ```
+- [x] Natural language justification for matching results (`POST /api/llm/justify` stubbed provider)
 - [ ] Ambiguous input parsing ("assign to someone this week")
 - [ ] Goal milestone suggestions from description
 
 **Guardrails**
-- [ ] Rate limiting per user/API key
-- [ ] PII detection and masking before LLM calls
-- [ ] Content moderation on LLM outputs
-- [ ] Cost tracking and budget limits
+- [x] Rate limiting per user/API key (in-memory)
+- [x] PII detection and masking before LLM calls
+- [x] Content moderation on LLM outputs
+- [x] Cost tracking (approximate) per response
 - [ ] Audit logging for all LLM interactions
 
 **Infrastructure**
@@ -157,8 +151,8 @@ LLM_RATE_LIMIT_RPM=60
 ```
 
 **Tests**
-- [ ] Mock LLM responses for deterministic testing
-- [ ] Guardrail trigger scenarios
+- [x] Mock LLM responses for deterministic testing
+- [x] Guardrail trigger scenarios
 
 ---
 

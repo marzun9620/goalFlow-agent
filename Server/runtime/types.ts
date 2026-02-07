@@ -59,6 +59,8 @@ const defaultTitle = (status: number): string => {
 			return "Not Found";
 		case 409:
 			return "Conflict";
+		case 429:
+			return "Too Many Requests";
 		case 422:
 			return "Unprocessable Entity";
 		default:
@@ -71,6 +73,7 @@ export const unauthorized = (init?: ProblemInit) => buildProblem(401, init);
 export const forbidden = (init?: ProblemInit) => buildProblem(403, init);
 export const notFound = (init?: ProblemInit) => buildProblem(404, init);
 export const conflict = (init?: ProblemInit) => buildProblem(409, init);
+export const tooManyRequests = (init?: ProblemInit) => buildProblem(429, init);
 export const internalServerError = (init?: ProblemInit) => buildProblem(500, init);
 
 export const respond = (c: HonoContext, problem: HttpError) =>
