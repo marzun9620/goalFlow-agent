@@ -7,10 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SkillLevel {
+  BEGINNER
+  JUNIOR
+  INTERMEDIATE
+  MID
+  SENIOR
+  EXPERT
+  PRINCIPAL
+}
+
+enum SkillPriority {
+  REQUIRED
+  PREFERRED
+  BONUS
+}
+
 model Skill {
   id                  String               @id @default(uuid())
   name                String
-  level               String?
+  level               SkillLevel?
   years               Int?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -37,7 +53,7 @@ model Person {
 model PersonSkill {
   personId String
   skillId  String
-  level    String?
+  level    SkillLevel?
   years    Int?
 
   person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
@@ -66,7 +82,8 @@ model Task {
 model TaskRequiredSkill {
   taskId        String
   skillId       String
-  requiredLevel String?
+  requiredLevel SkillLevel?
+  priority      SkillPriority @default(REQUIRED)
 
   task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)

@@ -22,7 +22,11 @@ export const matchRoutes = new Hono<ServerEnv>().post(
 			const result = await c.var.run(
 				Effect.gen(function* () {
 					const service = yield* MatchEmployeeUseCase;
-					return yield* service.match(body.taskId);
+					return yield* service.match(body.taskId, {
+						limit: body.limit,
+						skillWeight: body.skillWeight,
+						capacityWeight: body.capacityWeight,
+					});
 				}),
 			);
 			return c.json(result, 200);
