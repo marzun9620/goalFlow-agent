@@ -6,6 +6,7 @@ export interface TaskWithRequirements extends Task {
 	requiredSkills: {
 		skillId: string;
 		requiredLevel: string | null;
+		priority: "REQUIRED" | "PREFERRED" | "BONUS";
 		skill: { id: string; name: string };
 	}[];
 }
@@ -23,9 +24,17 @@ export interface CandidateRecord {
 	}[];
 }
 
+export interface CandidateFilter {
+	hasAnySkills?: string[];
+	minAvailableHours?: number;
+	excludePersonIds?: string[];
+}
+
 export interface MatchingRepository {
 	getTask(taskId: string): Effect.Effect<TaskWithRequirements | null, MatchingRepositoryError>;
-	listCandidates(): Effect.Effect<CandidateRecord[], MatchingRepositoryError>;
+	listCandidates(
+		filter?: CandidateFilter,
+	): Effect.Effect<CandidateRecord[], MatchingRepositoryError>;
 }
 
 export const MatchingRepository = Context.GenericTag<MatchingRepository>("MatchingRepository");

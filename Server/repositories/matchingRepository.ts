@@ -22,10 +22,31 @@ const makeService = (client: PrismaClient) => ({
 			catch: toError("getTask"),
 		}),
 
-	listCandidates: () =>
+	listCandidates: (filter?: {
+		hasAnySkills?: string[];
+		minAvailableHours?: number;
+		excludePersonIds?: string[];
+	}) =>
 		Effect.tryPromise({
 			try: () =>
 				client.person.findMany({
+					where: {
+						AND: [
+							filter?.excludePersonIds ? { id: { notIn: filter.excludePersonIds } } : {},
+							filter?.hasAnySkills?.length
+								? {
+										skills: {
+											some: { skillId: { in: filter.hasAnySkills } },
+										},
+									}
+								: {},
+							filter?.minAvailableHours != null
+								? {
+										weeklyCapacityHours: { gte: filter.minAvailableHours },
+									}
+								: {},
+						],
+					},
 					include: {
 						skills: {
 							include: {
@@ -37,18 +58,24 @@ const makeService = (client: PrismaClient) => ({
 			catch: toError("listCandidates"),
 		}).pipe(
 			Effect.map((persons) =>
-				persons.map((p) => ({
-					personId: p.id,
-					personName: p.name,
-					weeklyCapacityHours: p.weeklyCapacityHours,
-					currentLoadHours: p.currentLoadHours,
-					skills: p.skills.map((ps) => ({
-						skillId: ps.skillId,
-						skillName: ps.skill.name,
-						level: ps.level,
-						years: ps.years,
-					})),
-				})),
+				persons
+					.map((p) => ({
+						personId: p.id,
+						personName: p.name,
+						weeklyCapacityHours: p.weeklyCapacityHours,
+						currentLoadHours: p.currentLoadHours,
+						skills: p.skills.map((ps) => ({
+							skillId: ps.skillId,
+							skillName: ps.skill.name,
+							level: ps.level,
+							years: ps.years,
+						})),
+					}))
+					.filter((p) => {
+						if (filter?.minAvailableHours == null) return true;
+						const available = (p.weeklyCapacityHours ?? 0) - (p.currentLoadHours ?? 0);
+						return available >= filter.minAvailableHours;
+					}),
 			),
 		),
 });
