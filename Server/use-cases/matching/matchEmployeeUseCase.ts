@@ -62,7 +62,6 @@ export const MatchEmployeeUseCase =
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LEVEL_ORDER = ["beginner", "junior", "intermediate", "mid", "senior", "expert", "principal"];
-const MAX_LEVEL = LEVEL_ORDER.length; // 7
 
 const normalizeLevel = (level?: string | null): number => {
 	if (!level) return 1;

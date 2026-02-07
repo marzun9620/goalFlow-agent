@@ -3,7 +3,6 @@ import { Effect, Layer } from "effect";
 import { describe, expect, it } from "vitest";
 import {
 	MatchEmployeeUseCaseLive,
-	MatchingConfig,
 	MatchingConfigLive,
 	defaultMatchingConfig,
 } from "./matchEmployeeUseCase.js";
