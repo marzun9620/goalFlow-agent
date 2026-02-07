@@ -3,8 +3,8 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-02-07)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
-- Missing: Goal planning; LLM integration; connectors; UI flows; Docker/deployment.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
+- Missing: LLM integration; connectors; UI flows; Docker/deployment.
 - Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing), `Server/use-cases/matching/matchEmployeeUseCase.test.ts` (matching scoring). No integration/e2e.
 
 ## Progress tracker
@@ -13,7 +13,7 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - [x] Commit 3 — Matching use case (basic algorithm working, CI passing)
 - [x] Commit 4 — Matching algorithm improvements (architectural fixes)
 - [x] Commit 5 — Scheduling use case
-- [ ] Commit 6 — Goal planning
+- [x] Commit 6 — Goal planning
 - [ ] Commit 7 — LLM integration & guardrails
 - [ ] Commit 8 — Connectors (calendar, messaging, project tools)
 - [ ] Commit 9 — Web UI flows
@@ -88,14 +88,14 @@ interface TimeSlot {
 
 ---
 
-### Commit 6 — Goal planning
+### Commit 6 — Goal planning ✅
 Break goals into milestones and track progress.
 
 **Features**
-- [ ] `POST /api/goals` - Create goal
-- [ ] `GET /api/goals/:id` - Get goal with milestones
-- [ ] `POST /api/goals/:id/plan` - AI-assisted milestone breakdown
-- [ ] `GET /api/workload/summary` - Aggregate dashboard data
+- [x] `POST /api/goals` - Create goal
+- [x] `GET /api/goals/:id` - Get goal with milestones
+- [x] `POST /api/goals/:id/plan` - Milestone breakdown (heuristic, LLM-ready)
+- [x] `GET /api/workload/summary` - Aggregate dashboard data
   - Total assigned hours by person
   - Upcoming deadlines
   - Goal progress percentages
@@ -116,8 +116,8 @@ interface Milestone {
 ```
 
 **Tests**
-- [ ] Goal CRUD operations
-- [ ] Workload summary aggregation
+- [x] Goal create/get/plan
+- [x] Workload summary aggregation
 
 ---
 
