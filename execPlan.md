@@ -3,8 +3,8 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-02-07)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
-- Missing: Scheduling use case; goal planning; LLM integration; connectors; UI flows; Docker/deployment.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
+- Missing: Goal planning; LLM integration; connectors; UI flows; Docker/deployment.
 - Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing), `Server/use-cases/matching/matchEmployeeUseCase.test.ts` (matching scoring). No integration/e2e.
 
 ## Progress tracker
@@ -12,7 +12,7 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - [x] Commit 2 — API scaffolding & middleware
 - [x] Commit 3 — Matching use case (basic algorithm working, CI passing)
 - [x] Commit 4 — Matching algorithm improvements (architectural fixes)
-- [ ] Commit 5 — Scheduling use case
+- [x] Commit 5 — Scheduling use case
 - [ ] Commit 6 — Goal planning
 - [ ] Commit 7 — LLM integration & guardrails
 - [ ] Commit 8 — Connectors (calendar, messaging, project tools)
@@ -51,16 +51,16 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 
 ## Remaining Commits
 
-### Commit 5 — Scheduling use case
+### Commit 5 — Scheduling use case ✅
 Time-aware task scheduling with calendar integration.
 
 **Features**
-- [ ] `POST /api/schedule/propose` endpoint
+- [x] `POST /api/schedule/propose` endpoint
   - Input: taskId, preferredDateRange, constraints
   - Output: proposed slots ranked by availability
-- [ ] Free/busy calculation from CalendarEvent data
-- [ ] Deadline awareness (task.dueAt vs available slots)
-- [ ] Conflict detection with existing assignments
+- [x] Free/busy calculation from CalendarEvent data
+- [x] Deadline awareness (task.dueAt vs available slots) with automatic range clamping
+- [x] Conflict detection with existing assignments
 
 **Domain types**
 ```typescript
@@ -79,12 +79,12 @@ interface TimeSlot {
 ```
 
 **Repository additions**
-- [ ] `getPersonEvents(personId, dateRange)` - fetch calendar events
-- [ ] `getPersonAssignments(personId, dateRange)` - fetch task assignments
+- [x] `getPersonEvents(personId, dateRange)` - fetch calendar events
+- [x] `getPersonAssignments(personId, dateRange)` - fetch task assignments
 
 **Tests**
-- [ ] Scheduling logic with mock calendar data
-- [ ] Conflict detection scenarios
+- [x] Scheduling logic with mock calendar data
+- [x] Conflict detection scenarios (events + assignments)
 
 ---
 
