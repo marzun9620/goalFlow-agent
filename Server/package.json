@@ -7,8 +7,8 @@
 		"node": ">=20.19.5"
 	},
 	"scripts": {
-		"dev": "tsx server.ts",
-		"start": "node dist/server.js",
+		"dev": "tsx index.ts",
+		"start": "node dist/index.js",
 		"build": "tsc --project tsconfig.json --outDir dist",
 		"ci:check": "biome ci && tsc --noEmit",
 		"ci:build": "npm run build",
@@ -18,9 +18,12 @@
 		"biome:check:write": "biome check --write"
 	},
 	"dependencies": {
+		"@effect/platform-node": "^0.69.0",
+		"@hono/effect-validator": "^1.2.0",
 		"@hono/node-server": "^1.19.9",
 		"@prisma/client": "^6.0.0",
 		"hono": "^4.6.6",
+		"hono-openapi": "^1.1.2",
 		"@effect/schema": "^0.75.5",
 		"effect": "^3.9.2"
 	},

@@ -1,4 +1,4 @@
-import * as S from "@effect/schema/Schema";
+import * as S from "effect/Schema";
 
 export const HealthResponseSchema = S.Struct({
 	status: S.Literal("ok"),
