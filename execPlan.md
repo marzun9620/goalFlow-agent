@@ -3,15 +3,15 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-02-07)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
-- Missing: Matching algorithm improvements (capacity cap, configurable weights); scheduling use case; goal planning; LLM integration; connectors; UI flows; Docker/deployment.
-- Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing). No integration/e2e.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
+- Missing: Scheduling use case; goal planning; LLM integration; connectors; UI flows; Docker/deployment.
+- Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing), `Server/use-cases/matching/matchEmployeeUseCase.test.ts` (matching scoring). No integration/e2e.
 
 ## Progress tracker
 - [x] Commit 1 — Database foundations
 - [x] Commit 2 — API scaffolding & middleware
 - [x] Commit 3 — Matching use case (basic algorithm working, CI passing)
-- [ ] Commit 4 — Matching algorithm improvements (architectural fixes)
+- [x] Commit 4 — Matching algorithm improvements (architectural fixes)
 - [ ] Commit 5 — Scheduling use case
 - [ ] Commit 6 — Goal planning
 - [ ] Commit 7 — LLM integration & guardrails
@@ -40,64 +40,16 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - Repository pattern with Prisma; Effect DI with ManagedRuntime.
 - Typed errors: TaskNotFoundError, NoSuitableCandidateError.
 
+### Commit 4 — Matching algorithm improvements ✅
+- Capacity score capped at 1.0; skill scores normalized/capped at 1.0 with configurable missing-skill penalty.
+- Per-request limit and weight overrides; default weights/config via MatchingConfig.
+- Skill priorities (REQUIRED/PREFERRED/BONUS) and weighted skillScore; Prisma enums for SkillLevel and SkillPriority.
+- Repository candidate pre-filter by skills/available hours; HTTP schema returns priority.
+- New unit suite for matching edge cases and priority weighting.
+
 ---
 
 ## Remaining Commits
-
-### Commit 4 — Matching algorithm improvements
-Priority fixes identified in architecture review.
-
-**High Priority (bugs)**
-- [ ] Cap capacity score at 1.0 (currently unbounded, skews weighting)
-  ```typescript
-  // Before: available / effortHours (can be 10+)
-  // After: Math.min(1, available / effortHours)
-  ```
-- [ ] Add `limit` parameter to return top N candidates only
-- [ ] Normalize skill score to 0-1 range (currently 0-1.5)
-
-**Medium Priority (configurability)**
-- [ ] Make weights configurable via MatchingConfig service
-  ```typescript
-  interface MatchingConfig {
-    skillWeight: number;      // default 0.7
-    capacityWeight: number;   // default 0.3
-    maxCandidates: number;    // default 10
-  }
-  ```
-- [ ] Add skill priority levels (required | preferred | bonus)
-  ```prisma
-  model TaskRequiredSkill {
-    priority SkillPriority @default(REQUIRED)
-  }
-  enum SkillPriority { REQUIRED, PREFERRED, BONUS }
-  ```
-- [ ] Configurable missing skill penalty (default 0 is harsh)
-
-**Low Priority (scale/performance)**
-- [ ] Pre-filter candidates in database query (skills, min availability)
-  ```typescript
-  listCandidates(filter?: {
-    hasAnySkills?: string[];
-    minAvailableHours?: number;
-    excludePersonIds?: string[];
-  })
-  ```
-- [ ] Use enum for SkillLevel in Prisma schema (replace string)
-
-**Tests**
-- [ ] Unit tests for scoring edge cases (missing skills, zero effort, etc.)
-- [ ] Integration test with seed data
-
-**Verification**
-```bash
-npm test
-curl -X POST http://localhost:3000/api/match \
-  -H "Content-Type: application/json" \
-  -d '{"taskId": "...", "limit": 5}'
-```
-
----
 
 ### Commit 5 — Scheduling use case
 Time-aware task scheduling with calendar integration.
