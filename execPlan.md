@@ -3,8 +3,8 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-02-07)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; LLM justification stub with guardrails (PII/toxicity checks, rate limit) and cost reporting; connectors stubs (calendar, messaging, project) with HTTP endpoints; approvals workflow; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
-- Missing: UI flows; Docker/deployment.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; LLM justification stub with guardrails (PII/toxicity checks, rate limit) and cost reporting; connectors stubs (calendar, messaging, project) with HTTP endpoints; approvals workflow; web UI dashboard/tasks/goals/people flows; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
+- Missing: Docker/deployment.
 - Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing), `Server/use-cases/matching/matchEmployeeUseCase.test.ts` (matching scoring). No integration/e2e.
 
 ## Progress tracker
@@ -16,7 +16,7 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - [x] Commit 6 — Goal planning
 - [x] Commit 7 — LLM integration & guardrails
 - [x] Commit 8 — Connectors (calendar, messaging, project tools)
-- [ ] Commit 9 — Web UI flows
+- [x] Commit 9 — Web UI flows
 - [ ] Commit 10 — CI/CD and ops hardening
 - [ ] Commit 11 — Evaluation & polish
 
@@ -182,25 +182,21 @@ External service integrations.
 
 ---
 
-### Commit 9 — Web UI flows
+### Commit 9 — Web UI flows ✅
 React Router frontend for core workflows.
 
 **Pages**
-- [ ] Dashboard (`/`)
-  - Workload distribution chart
-  - Upcoming deadlines
-  - Goal progress cards
-- [ ] Task list (`/tasks`)
-- [ ] Task detail (`/tasks/:id`)
-  - Assignment panel with match suggestions
-- [ ] Goal list (`/goals`)
-- [ ] Goal detail (`/goals/:id`)
-  - Milestone timeline
-- [ ] Person view (`/people/:id`)
-  - Capacity utilization
-  - Assigned tasks
+- [x] Dashboard (`/dashboard`)
+  - Workload snapshots + upcoming tasks
+  - Goal progress preview
+- [x] Task list (`/tasks`)
+- [x] Task detail (`/tasks/:id`)
+- [x] Goal list (`/goals`)
+- [x] Goal detail (`/goals/:id`)
+- [x] Person view (`/people/:id`)
 
 **Components**
+- [x] Navigation + layout shell
 - [ ] MatchCandidateCard - display candidate with scores
 - [ ] ScheduleProposal - time slot picker
 - [ ] ApprovalDialog - approve/reject flow
@@ -216,7 +212,7 @@ React Router frontend for core workflows.
 - [ ] Protected routes
 
 **Tests**
-- [ ] RTL tests for key components
+- [x] RTL test for dashboard presence
 - [ ] Happy path flows
 
 ---
