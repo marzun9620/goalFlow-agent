@@ -52,7 +52,9 @@ export default function GoalDetailRoute() {
 	}
 
 	const statusClass =
-		goal?.status === "on_track" || goal?.status === "in_progress" ? "success" : "warn";
+		goal?.status === "on_track" || goal?.status === "in_progress"
+			? "success"
+			: "warn";
 
 	return (
 		<Layout>

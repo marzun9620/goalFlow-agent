@@ -59,7 +59,9 @@ export default function TaskDetailRoute() {
 				throw new Error(text || res.statusText);
 			}
 			const data = await res.json();
-			setJustification(typeof data.text === "string" ? data.text : JSON.stringify(data));
+			setJustification(
+				typeof data.text === "string" ? data.text : JSON.stringify(data),
+			);
 		} catch (err) {
 			setJustError(err instanceof Error ? err.message : "Request failed");
 		} finally {

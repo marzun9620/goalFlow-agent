@@ -43,7 +43,9 @@ export default function GoalsRoute() {
 					<a className="card" key={goal.id} href={`/goals/${goal.id}`}>
 						<p className="muted">{goal.targetDate ?? "No target"}</p>
 						<h3 style={{ margin: "0 0 0.35rem 0" }}>{goal.title}</h3>
-						<div className="muted">Progress {(goal.progress * 100).toFixed(0)}%</div>
+						<div className="muted">
+							Progress {(goal.progress * 100).toFixed(0)}%
+						</div>
 						<div
 							style={{
 								marginTop: "0.6rem",

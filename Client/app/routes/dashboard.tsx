@@ -37,7 +37,9 @@ export default function DashboardRoute() {
 		{ label: "Open Tasks", value: tasks.length, tone: "warn" as const },
 		{
 			label: "On-track Goals",
-			value: goals.filter((g) => g.status === "on_track" || g.status === "in_progress").length,
+			value: goals.filter(
+				(g) => g.status === "on_track" || g.status === "in_progress",
+			).length,
 			tone: "success" as const,
 		},
 		{
@@ -99,7 +101,9 @@ export default function DashboardRoute() {
 									<td>{task.title}</td>
 									<td>{task.assignee ?? "Unassigned"}</td>
 									<td>
-										<span className="pill warn">{task.priority ?? "Medium"}</span>
+										<span className="pill warn">
+											{task.priority ?? "Medium"}
+										</span>
 									</td>
 									<td>{task.dueAt ?? "—"}</td>
 								</tr>
