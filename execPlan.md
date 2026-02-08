@@ -3,8 +3,8 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-02-07)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; LLM justification stub with guardrails (PII/toxicity checks, rate limit) and cost reporting; connectors stubs (calendar, messaging, project) with HTTP endpoints; approvals workflow; web UI dashboard/tasks/goals/people flows; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
-- Missing: Docker/deployment.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; LLM justification stub with guardrails (PII/toxicity checks, rate limit) and cost reporting; connectors stubs (calendar, messaging, project) with HTTP endpoints; approvals workflow; web UI dashboard/tasks/goals/people flows; Dockerfiles for Server/Client and docker-compose stack; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
+- Missing: Final ops polish and deployment guides.
 - Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing), `Server/use-cases/matching/matchEmployeeUseCase.test.ts` (matching scoring). No integration/e2e.
 
 ## Progress tracker
@@ -17,7 +17,7 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - [x] Commit 7 — LLM integration & guardrails
 - [x] Commit 8 — Connectors (calendar, messaging, project tools)
 - [x] Commit 9 — Web UI flows
-- [ ] Commit 10 — CI/CD and ops hardening
+- [x] Commit 10 — CI/CD and ops hardening
 - [ ] Commit 11 — Evaluation & polish
 
 ---
@@ -217,17 +217,16 @@ React Router frontend for core workflows.
 
 ---
 
-### Commit 10 — CI/CD and ops hardening
+### Commit 10 — CI/CD and ops hardening ✅
 Production readiness.
 
 **Docker**
-- [ ] `Server/Dockerfile` - Node.js production image
-- [ ] `Client/Dockerfile` - React build + nginx
-- [ ] `docker-compose.yml` - Full stack local dev
+- [x] `Server/Dockerfile` - Node.js production image
+- [x] `Client/Dockerfile` - React build + nginx
+- [x] `docker-compose.yml` - Full stack local dev
   - PostgreSQL
   - Server API
   - Client app
-  - (optional) Redis for rate limiting
 
 **CI Improvements**
 - [ ] Run migrations in CI before tests

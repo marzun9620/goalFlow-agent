@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: ./Server
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://root:root@postgres:5432/app?schema=public&sslmode=disable
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+
+  client:
+    build:
+      context: ./Client
+      dockerfile: Dockerfile
+    depends_on:
+      - server
+    ports:
+      - "4173:80"
+
+volumes:
+  pgdata:
