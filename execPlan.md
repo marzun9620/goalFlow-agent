@@ -248,20 +248,20 @@ Production readiness.
 
 ---
 
-### Commit 11 — Evaluation & polish
+### Commit 11 — Evaluation & polish (in progress)
 Quality assurance and documentation.
 
 **Evaluation**
 - [ ] Matching quality dataset (expected matches)
 - [ ] Schedule acceptance rate tracking
-- [ ] Latency budgets (p50, p95, p99)
+- [x] Latency budgets documented (p50/p95/p99 targets)
 - [ ] LLM cost tracking dashboard
 
 **Documentation**
-- [ ] README with setup instructions
+- [x] README with setup instructions and endpoints
 - [ ] API documentation (OpenAPI spec)
 - [ ] Architecture decision records (ADRs)
-- [ ] Runbooks for common operations
+- [x] Runbooks for common operations (docs/OPS.md)
 - [ ] Approval matrix for sensitive actions
 
 **Polish**
