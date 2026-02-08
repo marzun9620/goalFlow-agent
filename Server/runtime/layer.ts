@@ -1,6 +1,9 @@
 import { Layer } from "effect";
+import { GoalRepositoryLive } from "../repositories/goalRepository.js";
 import { MatchingRepositoryLive } from "../repositories/matchingRepository.js";
 import { SchedulingRepositoryLive } from "../repositories/schedulingRepository.js";
+import { type GoalService, GoalServiceLive } from "../use-cases/goals/goalService.js";
+import type { GoalRepository } from "../use-cases/goals/repository.js";
 import {
 	type MatchEmployeeUseCase,
 	MatchEmployeeUseCaseLive,
@@ -27,11 +30,11 @@ import { LoggerLayer } from "./logger.js";
 const BaseLayer = Layer.mergeAll(AppConfigLive, LoggerLayer, MatchingConfigLive);
 const DbLayer = Layer.provideMerge(DatabaseLive, BaseLayer);
 const RepoLayer = Layer.provideMerge(
-	Layer.merge(MatchingRepositoryLive, SchedulingRepositoryLive),
+	Layer.mergeAll(MatchingRepositoryLive, SchedulingRepositoryLive, GoalRepositoryLive),
 	DbLayer,
 );
 const UseCaseLayer = Layer.provideMerge(
-	Layer.merge(MatchEmployeeUseCaseLive, ProposeScheduleUseCaseLive),
+	Layer.mergeAll(MatchEmployeeUseCaseLive, ProposeScheduleUseCaseLive, GoalServiceLive),
 	RepoLayer,
 );
 
@@ -44,4 +47,6 @@ export type AppServices =
 	| MatchEmployeeUseCase
 	| MatchingConfig
 	| SchedulingRepository
-	| ProposeScheduleUseCase;
+	| ProposeScheduleUseCase
+	| GoalRepository
+	| GoalService;
