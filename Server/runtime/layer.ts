@@ -2,6 +2,14 @@ import { Layer } from "effect";
 import { GoalRepositoryLive } from "../repositories/goalRepository.js";
 import { MatchingRepositoryLive } from "../repositories/matchingRepository.js";
 import { SchedulingRepositoryLive } from "../repositories/schedulingRepository.js";
+import {
+	type ApprovalService,
+	ApprovalServiceLive,
+} from "../use-cases/approvals/approvalService.js";
+import {
+	type ConnectorsService,
+	ConnectorsServiceStubLive,
+} from "../use-cases/connectors/connectorsService.js";
 import { type GoalService, GoalServiceLive } from "../use-cases/goals/goalService.js";
 import type { GoalRepository } from "../use-cases/goals/repository.js";
 import { type LlmAdapter, LlmAdapterStubLive } from "../use-cases/llm/adapter.js";
@@ -41,7 +49,14 @@ const LlmSupportLayer = Layer.merge(GuardrailsLive, LlmAdapterStubLive);
 const LlmLayer = Layer.provideMerge(LlmServiceLive, LlmSupportLayer);
 
 const UseCaseLayer = Layer.provideMerge(
-	Layer.mergeAll(MatchEmployeeUseCaseLive, ProposeScheduleUseCaseLive, GoalServiceLive, LlmLayer),
+	Layer.mergeAll(
+		MatchEmployeeUseCaseLive,
+		ProposeScheduleUseCaseLive,
+		GoalServiceLive,
+		LlmLayer,
+		ApprovalServiceLive,
+		ConnectorsServiceStubLive,
+	),
 	RepoLayer,
 );
 
@@ -59,4 +74,6 @@ export type AppServices =
 	| GoalService
 	| Guardrails
 	| LlmAdapter
-	| LlmService;
+	| LlmService
+	| ApprovalService
+	| ConnectorsService;
