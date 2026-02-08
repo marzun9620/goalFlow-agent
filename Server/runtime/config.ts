@@ -4,6 +4,7 @@ export interface AppConfig {
 	port: number;
 	databaseUrl: string;
 	nodeEnv: string;
+	openaiApiKey?: string;
 }
 
 export const AppConfig = Context.GenericTag<AppConfig>("AppConfig");
@@ -14,5 +15,13 @@ export const AppConfigLive = Layer.effect(
 		port: Config.number("PORT").pipe(Config.withDefault(3000)),
 		databaseUrl: Config.string("DATABASE_URL"),
 		nodeEnv: Config.string("NODE_ENV").pipe(Config.withDefault("development")),
-	}),
+		openaiApiKey: Config.string("OPENAI_API_KEY").pipe(Config.option),
+	}).pipe(
+		Config.map(({ port, databaseUrl, nodeEnv, openaiApiKey }) => ({
+			port,
+			databaseUrl,
+			nodeEnv,
+			openaiApiKey: openaiApiKey._tag === "Some" ? openaiApiKey.value : undefined,
+		})),
+	),
 );

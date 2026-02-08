@@ -11,8 +11,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-# Ensure prisma schema is present in build context before generation
-COPY prisma/schema.prisma ./prisma/schema.prisma
 RUN ls -la prisma && npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 

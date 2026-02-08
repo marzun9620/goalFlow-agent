@@ -1,4 +1,4 @@
-export type LlmProvider = "stub";
+export type LlmProvider = "stub" | "openai";
 
 export type LlmRequest = {
 	provider?: LlmProvider;

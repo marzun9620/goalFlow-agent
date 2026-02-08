@@ -6,7 +6,9 @@ import { goalsRoutes } from "./routes/goals/index.js";
 import { healthRoutes } from "./routes/health/index.js";
 import { llmRoutes } from "./routes/llm/index.js";
 import { matchRoutes } from "./routes/match/index.js";
+import { peopleRoutes } from "./routes/people/index.js";
 import { scheduleRoutes } from "./routes/schedule/index.js";
+import { tasksRoutes } from "./routes/tasks/index.js";
 import { workloadRoutes } from "./routes/workload/index.js";
 
 export const api = new Hono<ServerEnv>()
@@ -14,6 +16,8 @@ export const api = new Hono<ServerEnv>()
 	.route("/match", matchRoutes)
 	.route("/schedule", scheduleRoutes)
 	.route("/goals", goalsRoutes)
+	.route("/tasks", tasksRoutes)
+	.route("/people", peopleRoutes)
 	.route("/workload", workloadRoutes)
 	.route("/llm", llmRoutes)
 	.route("/approvals", approvalsRoutes)

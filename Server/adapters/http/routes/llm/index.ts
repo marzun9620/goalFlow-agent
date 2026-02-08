@@ -29,6 +29,8 @@ export const llmRoutes = new Hono<ServerEnv>().post(
 			);
 			return c.json(result, 200);
 		} catch (error) {
+			// Temporary: surface errors to logs for easier debugging
+			console.error("/api/llm/justify failed", error);
 			const problem = toProblem(error) ?? internalServerError("Unexpected error");
 			return respond(c, problem);
 		}

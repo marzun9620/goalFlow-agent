@@ -5,7 +5,7 @@ const navItems = [
 	{ to: "/dashboard", label: "Dashboard" },
 	{ to: "/tasks", label: "Tasks" },
 	{ to: "/goals", label: "Goals" },
-	{ to: "/people/p1", label: "People" },
+	{ to: "/people", label: "People" },
 ];
 
 export function Layout({ children }: PropsWithChildren) {

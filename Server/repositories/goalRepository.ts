@@ -65,10 +65,36 @@ const makeService = (client: PrismaClient) => ({
 			catch: toError("listTasks"),
 		}),
 
+	listTasksWithAssignees: () =>
+		Effect.tryPromise({
+			try: () =>
+				client.task.findMany({
+					include: {
+						assignments: {
+							include: { person: { select: { name: true } } },
+						},
+					},
+				}),
+			catch: toError("listTasksWithAssignees"),
+		}),
+
 	listGoals: () =>
 		Effect.tryPromise({
 			try: () => client.goal.findMany(),
 			catch: toError("listGoals"),
+		}),
+
+	listPeople: () =>
+		Effect.tryPromise({
+			try: () =>
+				client.person.findMany({
+					include: {
+						skills: {
+							include: { skill: { select: { name: true } } },
+						},
+					},
+				}),
+			catch: toError("listPeople"),
 		}),
 });
 
