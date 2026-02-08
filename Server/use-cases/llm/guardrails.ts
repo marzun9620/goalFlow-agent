@@ -20,7 +20,7 @@ const defaultConfig: GuardrailConfig = {
 
 const piiRegex =
 	/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\\b\\d{3}[-\\. ]?\\d{3}[-\\. ]?\\d{4}\\b)/iu;
-	const toxicWords = ["hate", "kill"];
+const toxicWords = ["hate", "kill"];
 
 const makeGuardrails = (config: GuardrailConfig): Effect.Effect<Guardrails> =>
 	Effect.gen(function* () {
