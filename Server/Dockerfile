@@ -10,9 +10,10 @@ FROM node:20.19-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
-COPY prisma ./prisma
 COPY . .
-RUN npx prisma generate --schema=./prisma/schema.prisma
+# Ensure prisma schema is present in build context before generation
+COPY prisma/schema.prisma ./prisma/schema.prisma
+RUN ls -la prisma && npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 
 FROM node:20.19-alpine AS runner
