@@ -18,6 +18,20 @@ import {
 } from "./schemas.js";
 
 export const goalsRoutes = new Hono<ServerEnv>()
+	.get("/", async (c) => {
+		try {
+			const result = await c.var.run(
+				Effect.gen(function* () {
+					const service = yield* GoalService;
+					return yield* service.listGoals();
+				}),
+			);
+			return c.json(result, 200);
+		} catch (error) {
+			const problem = toProblem(error) ?? internalServerError("Unexpected error");
+			return respond(c, problem);
+		}
+	})
 	.post("/", effectValidator("json", CreateGoalRequestSchema), async (c) => {
 		const body = c.req.valid("json") as CreateGoalRequest;
 		try {

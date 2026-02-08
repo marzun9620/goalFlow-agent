@@ -1,4 +1,4 @@
-import type { Goal, Person, Task, TaskAssignment } from "@prisma/client";
+import type { Goal, Person, PersonSkill, Task, TaskAssignment } from "@prisma/client";
 import { Context, type Effect } from "effect";
 import type { Milestone } from "../../domain/goals/types.js";
 import type { GoalRepositoryError } from "./errors.js";
@@ -10,6 +10,14 @@ export interface GoalRecord extends Goal {
 export interface AssignmentRecord extends TaskAssignment {
 	person: Pick<Person, "id" | "name">;
 	task: Pick<Task, "id" | "title" | "dueAt" | "effortHours">;
+}
+
+export interface PersonRecord extends Person {
+	skills: Array<{ skill: { name: string } }>;
+}
+
+export interface TaskWithAssignee extends Task {
+	assignments: Array<{ person: { name: string } }>;
 }
 
 export interface GoalRepository {
@@ -26,7 +34,9 @@ export interface GoalRepository {
 	) => Effect.Effect<GoalRecord, GoalRepositoryError>;
 	listAssignments: () => Effect.Effect<AssignmentRecord[], GoalRepositoryError>;
 	listTasks: () => Effect.Effect<Task[], GoalRepositoryError>;
+	listTasksWithAssignees: () => Effect.Effect<TaskWithAssignee[], GoalRepositoryError>;
 	listGoals: () => Effect.Effect<GoalRecord[], GoalRepositoryError>;
+	listPeople: () => Effect.Effect<PersonRecord[], GoalRepositoryError>;
 }
 
 export const GoalRepository = Context.GenericTag<GoalRepository>("GoalRepository");

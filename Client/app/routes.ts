@@ -7,5 +7,6 @@ export default [
 	route("/tasks/:id", "routes/task.$id.tsx"),
 	route("/goals", "routes/goals.tsx"),
 	route("/goals/:id", "routes/goal.$id.tsx"),
+	route("/people", "routes/people.tsx"),
 	route("/people/:id", "routes/person.$id.tsx"),
 ] satisfies RouteConfig;

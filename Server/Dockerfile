@@ -11,6 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+RUN ls -la prisma && npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 
 FROM node:20.19-alpine AS runner

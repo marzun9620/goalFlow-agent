@@ -1,7 +1,36 @@
+import { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
-import { tasks } from "../domain/mockData";
+
+type Task = {
+	id: string;
+	title: string;
+	status: string;
+	priority: string | null;
+	dueAt: string | null;
+	assignee: string | null;
+};
 
 export default function TasksRoute() {
+	const [tasks, setTasks] = useState<Task[]>([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		fetch("/api/tasks")
+			.then((r) => r.json())
+			.then(setTasks)
+			.finally(() => setLoading(false));
+	}, []);
+
+	if (loading) {
+		return (
+			<Layout>
+				<div className="header">
+					<p className="muted">Loading...</p>
+				</div>
+			</Layout>
+		);
+	}
+
 	return (
 		<Layout>
 			<div className="header">
@@ -32,7 +61,7 @@ export default function TasksRoute() {
 									<span className="pill">{task.status}</span>
 								</td>
 								<td>
-									<span className="pill warn">{task.priority}</span>
+									<span className="pill warn">{task.priority ?? "Medium"}</span>
 								</td>
 								<td>{task.dueAt ?? "—"}</td>
 							</tr>

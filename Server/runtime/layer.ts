@@ -1,4 +1,4 @@
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { GoalRepositoryLive } from "../repositories/goalRepository.js";
 import { MatchingRepositoryLive } from "../repositories/matchingRepository.js";
 import { SchedulingRepositoryLive } from "../repositories/schedulingRepository.js";
@@ -12,9 +12,14 @@ import {
 } from "../use-cases/connectors/connectorsService.js";
 import { type GoalService, GoalServiceLive } from "../use-cases/goals/goalService.js";
 import type { GoalRepository } from "../use-cases/goals/repository.js";
-import { type LlmAdapter, LlmAdapterStubLive } from "../use-cases/llm/adapter.js";
+import {
+	type LlmAdapter,
+	LlmAdapterStubLive,
+	LlmAdapter as LlmAdapterTag,
+} from "../use-cases/llm/adapter.js";
 import { type Guardrails, GuardrailsLive } from "../use-cases/llm/guardrails.js";
 import { type LlmService, LlmServiceLive } from "../use-cases/llm/llmService.js";
+import { LlmAdapterOpenAILive } from "../use-cases/llm/openaiAdapter.js";
 import {
 	type MatchEmployeeUseCase,
 	MatchEmployeeUseCaseLive,
@@ -27,8 +32,7 @@ import {
 	ProposeScheduleUseCaseLive,
 } from "../use-cases/scheduling/proposeScheduleUseCase.js";
 import type { SchedulingRepository } from "../use-cases/scheduling/repository.js";
-import type { AppConfig } from "./config.js";
-import { AppConfigLive } from "./config.js";
+import { type AppConfig, AppConfigLive, AppConfig as AppConfigTag } from "./config.js";
 import type { Database } from "./database.js";
 import { DatabaseLive } from "./database.js";
 import { LoggerLayer } from "./logger.js";
@@ -45,7 +49,14 @@ const RepoLayer = Layer.provideMerge(
 	DbLayer,
 );
 
-const LlmSupportLayer = Layer.merge(GuardrailsLive, LlmAdapterStubLive);
+// Conditionally select LLM adapter: use OpenAI if API key is present, otherwise stub
+const LlmAdapterLive = Layer.unwrapEffect(
+	Effect.map(AppConfigTag, (config) =>
+		config.openaiApiKey ? LlmAdapterOpenAILive : LlmAdapterStubLive,
+	),
+);
+
+const LlmSupportLayer = Layer.merge(GuardrailsLive, LlmAdapterLive);
 const LlmLayer = Layer.provideMerge(LlmServiceLive, LlmSupportLayer);
 
 const UseCaseLayer = Layer.provideMerge(

@@ -33,7 +33,8 @@ const makeGuardrails = (config: GuardrailConfig): Effect.Effect<Guardrails> =>
 				issues.push({ type: "pii", span: piiMatch[0] });
 			}
 			for (const w of toxicWords) {
-				if (text.toLowerCase().includes(w)) {
+				const wordRegex = new RegExp(`\\b${w}\\b`, "i");
+				if (wordRegex.test(text)) {
 					issues.push({ type: "toxicity", span: w });
 					break;
 				}
