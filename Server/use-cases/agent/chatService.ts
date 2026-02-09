@@ -1,10 +1,16 @@
 import { Context, Effect, Layer } from "effect";
-import type { AgentChatResult, AgentProposal } from "../../domain/agent/types.js";
+import type {
+	AgentChatResult,
+	AgentIntentPayload,
+	AgentMemberIntent,
+	AgentProposal,
+} from "../../domain/agent/types.js";
 import {
 	AgentChatError,
 	AgentConversationNotFoundError,
 	type AgentRepositoryError,
 } from "./errors.js";
+import { parseIntentDraft } from "./intentParser.js";
 import { AgentRepository } from "./repository.js";
 
 export interface AgentChatInput {
@@ -79,20 +85,169 @@ const toActionStatus = (
 	status: "PENDING" | "SUCCESS" | "FAILED" | "SKIPPED",
 ): "pending" | "success" | "failed" | "skipped" => status.toLowerCase() as never;
 
-const makeProposal = (message: string): AgentProposal => ({
-	mode: "proposal_only",
-	rawMessage: message,
-	summary:
-		"Proposal captured. This run is saved in proposal-only mode and requires approval to execute.",
-	generatedAt: new Date().toISOString(),
-	actions: [
-		{
-			type: "parse_request",
-			description: "Parse project, tasks, members, and skill hints from chat.",
+const memberNameEquals = (a: string, b: string) =>
+	a.trim().toLowerCase() === b.trim().toLowerCase();
+
+const resolveMemberIntent = (
+	memberName: string,
+	matches: Array<{ id: string; name: string; weeklyCapacityHours: number | null }>,
+): Omit<AgentMemberIntent, "weeklyCapacityHours" | "skills"> => {
+	const exactMatches = matches.filter((match) => memberNameEquals(match.name, memberName));
+	if (exactMatches.length === 1) {
+		return {
+			name: memberName,
+			resolution: "existing",
+			existingPersonId: exactMatches[0].id,
+			candidateMatches: [{ id: exactMatches[0].id, name: exactMatches[0].name }],
+		};
+	}
+	if (exactMatches.length > 1 || matches.length > 1) {
+		return {
+			name: memberName,
+			resolution: "ambiguous",
+			existingPersonId: null,
+			candidateMatches: matches.map((match) => ({ id: match.id, name: match.name })),
+		};
+	}
+	if (matches.length === 1) {
+		return {
+			name: memberName,
+			resolution: "existing",
+			existingPersonId: matches[0].id,
+			candidateMatches: [{ id: matches[0].id, name: matches[0].name }],
+		};
+	}
+	return {
+		name: memberName,
+		resolution: "new",
+		existingPersonId: null,
+		candidateMatches: [],
+	};
+};
+
+const buildFollowUps = (intent: AgentIntentPayload) => {
+	const questions: string[] = [];
+	if (!intent.project) {
+		questions.push("What is the project name?");
+	}
+	if (intent.tasks.length === 0) {
+		questions.push("Which tasks should be created?");
+	}
+	for (const member of intent.members) {
+		if (member.resolution === "ambiguous" && member.candidateMatches.length > 0) {
+			const options = member.candidateMatches.map((candidate) => candidate.name).join(", ");
+			questions.push(`Which ${member.name} do you mean: ${options}?`);
+		}
+		if (member.weeklyCapacityHours == null) {
+			questions.push(`What weekly capacity (hours/week) should I use for ${member.name}?`);
+		}
+		for (const skill of member.skills) {
+			if (!skill.level) {
+				questions.push(`What level should I record for ${member.name}'s ${skill.name} skill?`);
+			}
+		}
+	}
+	return questions;
+};
+
+const makeSummary = (intent: AgentIntentPayload) => {
+	const memberStats = intent.members.reduce(
+		(acc, member) => {
+			acc[member.resolution] += 1;
+			return acc;
 		},
-		{ type: "prepare_distribution", description: "Prepare a capacity-based assignment preview." },
-	],
-});
+		{ existing: 0, new: 0, ambiguous: 0 },
+	);
+
+	const base = `Parsed ${intent.tasks.length} task(s) and ${intent.members.length} member(s) for proposal-only review.`;
+	const details = ` Existing: ${memberStats.existing}, New: ${memberStats.new}, Ambiguous: ${memberStats.ambiguous}.`;
+	if (intent.followUps.length === 0) {
+		return `${base}${details} Ready for approval once you confirm.`;
+	}
+	return `${base}${details} Need ${intent.followUps.length} clarification(s) before approval.`;
+};
+
+const makeProposal = (
+	repo: AgentRepository,
+	message: string,
+): Effect.Effect<AgentProposal, AgentRepositoryError> =>
+	Effect.gen(function* () {
+		const draft = parseIntentDraft(message);
+		const members: AgentIntentPayload["members"] = [];
+
+		for (const draftMember of draft.members) {
+			const matches = yield* repo.searchPeopleByName(draftMember.name).pipe(
+				Effect.map((results) =>
+					results.map((result) => ({
+						id: result.id,
+						name: result.name,
+						weeklyCapacityHours: result.weeklyCapacityHours,
+					})),
+				),
+			);
+
+			const resolved = resolveMemberIntent(draftMember.name, matches);
+			const preferredCapacityFromExisting =
+				resolved.existingPersonId == null
+					? null
+					: (matches.find((match) => match.id === resolved.existingPersonId)?.weeklyCapacityHours ??
+						null);
+
+			members.push({
+				name: resolved.name,
+				resolution: resolved.resolution,
+				existingPersonId: resolved.existingPersonId,
+				candidateMatches: resolved.candidateMatches,
+				weeklyCapacityHours: draftMember.weeklyCapacityHours ?? preferredCapacityFromExisting,
+				skills: draftMember.skills,
+			});
+		}
+
+		const intent: AgentIntentPayload = {
+			project: draft.project,
+			tasks: draft.tasks,
+			members,
+			distributionMode: draft.distributionMode ?? "capacity",
+			followUps: [],
+		};
+		const followUps = buildFollowUps(intent);
+		intent.followUps = followUps;
+
+		const actions: AgentProposal["actions"] = [
+			{
+				type: "parse_request",
+				description: "Parse project, tasks, members, and member skills from chat input.",
+			},
+			{
+				type: "resolve_members",
+				description: "Match member names to existing people and flag ambiguous matches.",
+			},
+			{
+				type: "preview_upserts",
+				description: "Preview person and skill upserts in proposal-only mode (no writes).",
+			},
+			{
+				type: "prepare_distribution",
+				description: "Prepare a capacity-based assignment preview for approval.",
+			},
+		];
+
+		if (followUps.length > 0) {
+			actions.push({
+				type: "collect_followups",
+				description: "Collect missing weekly capacity and skill level details before execution.",
+			});
+		}
+
+		return {
+			mode: "proposal_only",
+			rawMessage: message,
+			summary: makeSummary(intent),
+			generatedAt: new Date().toISOString(),
+			intent,
+			actions,
+		};
+	});
 
 const makeTitle = (message: string) => {
 	const cleaned = message.trim().replace(/\s+/g, " ");
@@ -122,7 +277,7 @@ const makeService = (repo: AgentRepository): AgentChatService => ({
 				content: input.message,
 			});
 
-			const proposal = makeProposal(input.message);
+			const proposal = yield* makeProposal(repo, input.message);
 			const run = yield* repo.createRun({
 				conversationId: conversation.id,
 				status: "PROPOSED",

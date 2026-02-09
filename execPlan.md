@@ -20,7 +20,7 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - [x] Commit 10 — CI/CD and ops hardening
 - [ ] Commit 11 — Evaluation & polish
 - [x] Commit 12 — Agent chat domain & storage
-- [ ] Commit 13 — Chat intent parsing (project/tasks/members/skills)
+- [x] Commit 13 — Chat intent parsing (project/tasks/members/skills)
 - [ ] Commit 14 — Capacity distribution + approval execution
 - [ ] Commit 15 — Chat UI with proposal cards
 - [ ] Commit 16 — Chat-agent test matrix & rollout docs
@@ -294,25 +294,25 @@ Introduce a chat-first execution model with auditable proposals.
 
 ---
 
-### Commit 13 — Chat intent parsing (project/tasks/members/skills)
+### Commit 13 — Chat intent parsing (project/tasks/members/skills) ✅
 Parse user chat like: "New project X, add tasks A/B/C, include Sam and Maya, distribute by capacity."
 
 **Features**
-- [ ] Add intent parser output schema:
-  - [ ] `project` (create/update)
-  - [ ] `tasks[]`
-  - [ ] `members[]` (new/existing)
-  - [ ] `skills[]` per member (`name`, `level`, optional `years`)
-  - [ ] `distributionMode` (`capacity`)
-- [ ] Resolve existing people by name (with ambiguity handling)
-- [ ] Upsert new members + skill profiles in proposal preview (not applied yet)
-- [ ] Ask structured follow-ups for missing fields:
-  - [ ] weekly capacity missing
-  - [ ] skill level missing for required skill
+- [x] Add intent parser output schema:
+  - [x] `project` (create/update)
+  - [x] `tasks[]`
+  - [x] `members[]` (new/existing/ambiguous)
+  - [x] `skills[]` per member (`name`, `level`, optional `years`)
+  - [x] `distributionMode` (`capacity`, defaulted when omitted)
+- [x] Resolve existing people by name (with ambiguity handling)
+- [x] Upsert new members + skill profiles in proposal preview (not applied yet)
+- [x] Ask structured follow-ups for missing fields:
+  - [x] weekly capacity missing
+  - [x] skill level missing for required skill
 
 **Definition of done**
-- [ ] Chat input reliably generates a structured proposal card with parsed members and skills
-- [ ] Ambiguous people names return clarification prompts instead of bad assumptions
+- [x] Chat input reliably generates a structured proposal payload with parsed members and skills
+- [x] Ambiguous people names return clarification prompts instead of bad assumptions
 
 ---
 

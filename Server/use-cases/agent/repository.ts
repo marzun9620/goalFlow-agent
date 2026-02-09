@@ -43,6 +43,18 @@ export type AgentConversationSnapshot = {
 	actions: AgentActionRecord[];
 };
 
+export type AgentPersonRecord = {
+	id: string;
+	name: string;
+	weeklyCapacityHours: number | null;
+	currentLoadHours: number;
+	skills: Array<{
+		name: string;
+		level: string | null;
+		years: number | null;
+	}>;
+};
+
 export interface AgentRepository {
 	createConversation: (input?: {
 		title?: string | null;
@@ -63,6 +75,7 @@ export interface AgentRepository {
 	getConversationSnapshot: (
 		conversationId: string,
 	) => Effect.Effect<AgentConversationSnapshot | null, AgentRepositoryError>;
+	searchPeopleByName: (name: string) => Effect.Effect<AgentPersonRecord[], AgentRepositoryError>;
 }
 
 export const AgentRepository = Context.GenericTag<AgentRepository>("AgentRepository");

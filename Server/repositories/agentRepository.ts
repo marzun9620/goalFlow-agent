@@ -93,6 +93,47 @@ const makeService = (client: PrismaClient) => ({
 			},
 			catch: toError("getConversationSnapshot"),
 		}),
+
+	searchPeopleByName: (name: string) =>
+		Effect.tryPromise({
+			try: () =>
+				client.person.findMany({
+					where: {
+						name: {
+							contains: name,
+							mode: "insensitive",
+						},
+					},
+					orderBy: { name: "asc" },
+					take: 10,
+					include: {
+						skills: {
+							include: {
+								skill: {
+									select: {
+										name: true,
+									},
+								},
+							},
+						},
+					},
+				}),
+			catch: toError("searchPeopleByName"),
+		}).pipe(
+			Effect.map((people) =>
+				people.map((person) => ({
+					id: person.id,
+					name: person.name,
+					weeklyCapacityHours: person.weeklyCapacityHours,
+					currentLoadHours: person.currentLoadHours,
+					skills: person.skills.map((skill) => ({
+						name: skill.skill.name,
+						level: skill.level ? skill.level.toLowerCase() : null,
+						years: skill.years,
+					})),
+				})),
+			),
+		),
 });
 
 export const AgentRepositoryLive = Layer.effect(
