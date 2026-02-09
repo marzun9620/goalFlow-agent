@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { ServerEnv } from "../../runtime/types.js";
+import { agentRoutes } from "./routes/agent/index.js";
 import { approvalsRoutes } from "./routes/approvals/index.js";
 import { connectorsRoutes } from "./routes/connectors/index.js";
 import { goalsRoutes } from "./routes/goals/index.js";
@@ -21,4 +22,5 @@ export const api = new Hono<ServerEnv>()
 	.route("/workload", workloadRoutes)
 	.route("/llm", llmRoutes)
 	.route("/approvals", approvalsRoutes)
-	.route("/connectors", connectorsRoutes);
+	.route("/connectors", connectorsRoutes)
+	.route("/agent", agentRoutes);

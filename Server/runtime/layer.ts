@@ -1,7 +1,10 @@
 import { Effect, Layer } from "effect";
+import { AgentRepositoryLive } from "../repositories/agentRepository.js";
 import { GoalRepositoryLive } from "../repositories/goalRepository.js";
 import { MatchingRepositoryLive } from "../repositories/matchingRepository.js";
 import { SchedulingRepositoryLive } from "../repositories/schedulingRepository.js";
+import { type AgentChatService, AgentChatServiceLive } from "../use-cases/agent/chatService.js";
+import type { AgentRepository } from "../use-cases/agent/repository.js";
 import {
 	type ApprovalService,
 	ApprovalServiceLive,
@@ -45,7 +48,12 @@ import { LoggerLayer } from "./logger.js";
 const BaseLayer = Layer.mergeAll(AppConfigLive, LoggerLayer, MatchingConfigLive);
 const DbLayer = Layer.provideMerge(DatabaseLive, BaseLayer);
 const RepoLayer = Layer.provideMerge(
-	Layer.mergeAll(MatchingRepositoryLive, SchedulingRepositoryLive, GoalRepositoryLive),
+	Layer.mergeAll(
+		MatchingRepositoryLive,
+		SchedulingRepositoryLive,
+		GoalRepositoryLive,
+		AgentRepositoryLive,
+	),
 	DbLayer,
 );
 
@@ -67,6 +75,7 @@ const UseCaseLayer = Layer.provideMerge(
 		LlmLayer,
 		ApprovalServiceLive,
 		ConnectorsServiceStubLive,
+		AgentChatServiceLive,
 	),
 	RepoLayer,
 );
@@ -83,6 +92,8 @@ export type AppServices =
 	| ProposeScheduleUseCase
 	| GoalRepository
 	| GoalService
+	| AgentRepository
+	| AgentChatService
 	| Guardrails
 	| LlmAdapter
 	| LlmService
