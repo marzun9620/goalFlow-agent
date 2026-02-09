@@ -23,6 +23,27 @@ enum SkillPriority {
   BONUS
 }
 
+enum AgentMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AgentRunStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+  EXECUTED
+  FAILED
+}
+
+enum AgentActionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
 model Skill {
   id                  String               @id @default(uuid())
   name                String
@@ -131,4 +152,54 @@ model CalendarEvent {
   person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   @@index([personId, startAt, endAt])
+}
+
+model Conversation {
+  id        String                @id @default(uuid())
+  title     String?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  messages  ConversationMessage[]
+  runs      AgentRun[]
+}
+
+model ConversationMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  role           AgentMessageRole
+  content        String
+  createdAt      DateTime         @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model AgentRun {
+  id             String         @id @default(uuid())
+  conversationId String
+  status         AgentRunStatus @default(PROPOSED)
+  input          Json?
+  proposal       Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  actions        AgentAction[]
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model AgentAction {
+  id        String            @id @default(uuid())
+  runId     String
+  type      String
+  status    AgentActionStatus @default(PENDING)
+  payload   Json?
+  error     String?
+  createdAt DateTime          @default(now())
+
+  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, createdAt])
 }

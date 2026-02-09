@@ -3,8 +3,8 @@
 Context: skeleton app exists (Client React Router shell, Server Hono health check, Prisma schema only). The plan below is organized into commit-sized slices to reach a functional GoalFlow agent.
 
 ## Status snapshot (2026-02-07)
-- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; LLM justification stub with guardrails (PII/toxicity checks, rate limit) and cost reporting; connectors stubs (calendar, messaging, project) with HTTP endpoints; approvals workflow; web UI dashboard/tasks/goals/people flows; Dockerfiles for Server/Client and docker-compose stack; ManagedRuntime for DI; RFC7807 error handling; CI passing (lint/typecheck/tests).
-- Missing: Final ops polish and deployment guides.
+- Implemented: Shared Prisma schema; Atlas SQL migration + seed fixture; Dockerized Postgres; Prisma generate in CI; API scaffolding with Effect/Hono; runtime wiring (config/logger/db); health/version + matching endpoints; matching algorithm improvements (caps, weights, priorities, prefilter); scheduling use case with calendar/assignment conflicts and due-date awareness; goal planning endpoints with milestone generation and workload summary; LLM justification stub with guardrails (PII/toxicity checks, rate limit) and cost reporting; connectors stubs (calendar, messaging, project) with HTTP endpoints; approvals workflow; web UI dashboard/tasks/goals/people flows; Dockerfiles for Server/Client and docker-compose stack; ManagedRuntime for DI; RFC7807 error handling; agent chat domain & storage (conversation/message/run/action persistence + proposal-only chat/history routes); CI passing (lint/typecheck/tests).
+- Missing: Final ops polish/deployment guides, plus chat-native agent orchestration (project/task/member skill intake, proposal cards, and approve-to-apply execution).
 - Tests present: `Server/app.test.ts` (health/version), `Client/app/routes/_index.test.tsx` (landing), `Server/use-cases/matching/matchEmployeeUseCase.test.ts` (matching scoring). No integration/e2e.
 
 ## Progress tracker
@@ -19,6 +19,11 @@ Context: skeleton app exists (Client React Router shell, Server Hono health chec
 - [x] Commit 9 — Web UI flows
 - [x] Commit 10 — CI/CD and ops hardening
 - [ ] Commit 11 — Evaluation & polish
+- [x] Commit 12 — Agent chat domain & storage
+- [ ] Commit 13 — Chat intent parsing (project/tasks/members/skills)
+- [ ] Commit 14 — Capacity distribution + approval execution
+- [ ] Commit 15 — Chat UI with proposal cards
+- [ ] Commit 16 — Chat-agent test matrix & rollout docs
 
 ---
 
@@ -269,6 +274,113 @@ Quality assurance and documentation.
 - [ ] Loading states in UI
 - [ ] Empty state designs
 - [ ] Mobile responsiveness
+
+---
+
+### Commit 12 — Agent chat domain & storage ✅
+Introduce a chat-first execution model with auditable proposals.
+
+**Features**
+- [x] Add `Conversation`, `ConversationMessage`, `AgentRun`, `AgentAction` persistence models
+- [x] Add repository interfaces and Effect layers for chat history + run tracking
+- [x] Add HTTP routes:
+  - [x] `POST /api/agent/chat` (proposal generation only)
+  - [x] `GET /api/agent/conversations/:id` (history)
+- [x] Persist proposal payloads before any mutation
+
+**Definition of done**
+- [x] Sending a user message creates a conversation thread and a persisted proposal run
+- [x] No side effects yet (proposal-only mode)
+
+---
+
+### Commit 13 — Chat intent parsing (project/tasks/members/skills)
+Parse user chat like: "New project X, add tasks A/B/C, include Sam and Maya, distribute by capacity."
+
+**Features**
+- [ ] Add intent parser output schema:
+  - [ ] `project` (create/update)
+  - [ ] `tasks[]`
+  - [ ] `members[]` (new/existing)
+  - [ ] `skills[]` per member (`name`, `level`, optional `years`)
+  - [ ] `distributionMode` (`capacity`)
+- [ ] Resolve existing people by name (with ambiguity handling)
+- [ ] Upsert new members + skill profiles in proposal preview (not applied yet)
+- [ ] Ask structured follow-ups for missing fields:
+  - [ ] weekly capacity missing
+  - [ ] skill level missing for required skill
+
+**Definition of done**
+- [ ] Chat input reliably generates a structured proposal card with parsed members and skills
+- [ ] Ambiguous people names return clarification prompts instead of bad assumptions
+
+---
+
+### Commit 14 — Capacity distribution + approval execution
+Turn approved proposals into real writes.
+
+**Features**
+- [ ] Implement capacity-based task distribution using existing matching/scheduling use cases
+- [ ] Add approve endpoint:
+  - [ ] `POST /api/agent/approve/:runId`
+- [ ] On approval, execute ordered actions:
+  - [ ] create/update project/goal
+  - [ ] create tasks
+  - [ ] create/update members
+  - [ ] upsert member skills
+  - [ ] assign tasks by capacity
+- [ ] Save execution results and failures per action (`AgentAction` audit trail)
+
+**Guardrails**
+- [ ] Proposal-first default (no implicit writes)
+- [ ] Idempotency key per approval run to prevent duplicate writes
+
+**Definition of done**
+- [ ] One approved run creates/upserts entities and assignments end-to-end
+- [ ] Partial failures are visible with per-action status
+
+---
+
+### Commit 15 — Chat UI with proposal cards
+Add a dedicated `/agent` experience for project planning by chat.
+
+**Pages/Components**
+- [ ] `/agent` route with conversation list + active thread
+- [ ] Chat composer for free-text requests
+- [ ] Proposal card component:
+  - [ ] parsed members + skills
+  - [ ] task distribution preview
+  - [ ] capacity warnings
+  - [ ] Approve / Reject / Regenerate actions
+- [ ] Execution result timeline (success/failure by action)
+
+**UX behavior**
+- [ ] New member + skill entries shown clearly before approval
+- [ ] Existing member updates displayed as diffs
+- [ ] Loading/error/empty states for conversation and proposal data
+
+---
+
+### Commit 16 — Chat-agent test matrix & rollout docs
+Harden reliability for demos and pilot teams.
+
+**Tests**
+- [ ] Server integration tests for:
+  - [ ] parse project/tasks/members/skills from chat
+  - [ ] ambiguous member resolution
+  - [ ] capacity distribution path
+  - [ ] approve execution with action audit trail
+- [ ] Client tests for chat send, proposal render, approve flow
+- [ ] Regression tests for no-write-before-approval guarantee
+
+**Documentation**
+- [ ] Chat command examples and supported syntax in `README.md`
+- [ ] Ops runbook for agent failures/retries in `docs/OPS.md`
+- [ ] "How member skills are interpreted" reference (levels, defaults, conflicts)
+
+**Release criteria**
+- [ ] p95 agent proposal latency target documented and measured
+- [ ] Feature flag for `/agent` flow (`AGENT_CHAT_ENABLED`)
 
 ---
 

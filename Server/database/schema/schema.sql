@@ -6,6 +6,12 @@ CREATE TYPE "SkillLevel" AS ENUM ('BEGINNER','JUNIOR','INTERMEDIATE','MID','SENI
 
 CREATE TYPE "SkillPriority" AS ENUM ('REQUIRED','PREFERRED','BONUS');
 
+CREATE TYPE "AgentMessageRole" AS ENUM ('USER','ASSISTANT','SYSTEM');
+
+CREATE TYPE "AgentRunStatus" AS ENUM ('PROPOSED','APPROVED','REJECTED','EXECUTED','FAILED');
+
+CREATE TYPE "AgentActionStatus" AS ENUM ('PENDING','SUCCESS','FAILED','SKIPPED');
+
 CREATE TABLE "Skill" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -107,11 +113,67 @@ CREATE TABLE "CalendarEvent" (
     CONSTRAINT "CalendarEvent_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Conversation" (
+    "id" TEXT NOT NULL,
+    "title" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Conversation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ConversationMessage" (
+    "id" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "role" "AgentMessageRole" NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ConversationMessage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AgentRun" (
+    "id" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "status" "AgentRunStatus" NOT NULL DEFAULT 'PROPOSED',
+    "input" JSONB,
+    "proposal" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AgentRun_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AgentAction" (
+    "id" TEXT NOT NULL,
+    "runId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "status" "AgentActionStatus" NOT NULL DEFAULT 'PENDING',
+    "payload" JSONB,
+    "error" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AgentAction_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "TaskAssignment_taskId_personId_key" ON "TaskAssignment"("taskId", "personId");
 
 -- CreateIndex
 CREATE INDEX "CalendarEvent_personId_startAt_endAt_idx" ON "CalendarEvent"("personId", "startAt", "endAt");
+
+-- CreateIndex
+CREATE INDEX "ConversationMessage_conversationId_createdAt_idx" ON "ConversationMessage"("conversationId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "AgentRun_conversationId_createdAt_idx" ON "AgentRun"("conversationId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "AgentAction_runId_createdAt_idx" ON "AgentAction"("runId", "createdAt");
 
 -- AddForeignKey
 ALTER TABLE "PersonSkill" ADD CONSTRAINT "PersonSkill_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -139,3 +201,12 @@ ALTER TABLE "Goal" ADD CONSTRAINT "Goal_ownerId_fkey" FOREIGN KEY ("ownerId") RE
 
 -- AddForeignKey
 ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ConversationMessage" ADD CONSTRAINT "ConversationMessage_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AgentRun" ADD CONSTRAINT "AgentRun_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AgentAction" ADD CONSTRAINT "AgentAction_runId_fkey" FOREIGN KEY ("runId") REFERENCES "AgentRun"("id") ON DELETE CASCADE ON UPDATE CASCADE;
