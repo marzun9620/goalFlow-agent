@@ -49,6 +49,18 @@ const createRepositoryLayer = (
 					skills: [],
 				})),
 			),
+		getRunById: () => Effect.succeed(null),
+		updateRunStatus: () => Effect.die("not used"),
+		updateRunData: () => Effect.die("not used"),
+		createAction: () => Effect.die("not used"),
+		updateAction: () => Effect.die("not used"),
+		upsertGoalByTitle: () => Effect.die("not used"),
+		upsertPerson: () => Effect.die("not used"),
+		upsertMemberSkill: () => Effect.die("not used"),
+		createTask: () => Effect.die("not used"),
+		createTaskAssignment: () => Effect.die("not used"),
+		incrementPersonLoad: () => Effect.die("not used"),
+		getActionsByRunId: () => Effect.succeed([]),
 	} as AgentRepository);
 
 const runChat = async (
