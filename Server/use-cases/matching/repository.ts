@@ -28,6 +28,7 @@ export interface CandidateFilter {
 	hasAnySkills?: string[];
 	minAvailableHours?: number;
 	excludePersonIds?: string[];
+	includePersonIds?: string[];
 }
 
 export interface MatchingRepository {

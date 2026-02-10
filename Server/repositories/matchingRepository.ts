@@ -26,12 +26,14 @@ const makeService = (client: PrismaClient) => ({
 		hasAnySkills?: string[];
 		minAvailableHours?: number;
 		excludePersonIds?: string[];
+		includePersonIds?: string[];
 	}) =>
 		Effect.tryPromise({
 			try: () =>
 				client.person.findMany({
 					where: {
 						AND: [
+							filter?.includePersonIds ? { id: { in: filter.includePersonIds } } : {},
 							filter?.excludePersonIds ? { id: { notIn: filter.excludePersonIds } } : {},
 							filter?.hasAnySkills?.length
 								? {

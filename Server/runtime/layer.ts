@@ -4,6 +4,10 @@ import { GoalRepositoryLive } from "../repositories/goalRepository.js";
 import { MatchingRepositoryLive } from "../repositories/matchingRepository.js";
 import { SchedulingRepositoryLive } from "../repositories/schedulingRepository.js";
 import { type AgentChatService, AgentChatServiceLive } from "../use-cases/agent/chatService.js";
+import {
+	type AgentExecutionService,
+	AgentExecutionServiceLive,
+} from "../use-cases/agent/executionService.js";
 import type { AgentRepository } from "../use-cases/agent/repository.js";
 import {
 	type ApprovalService,
@@ -66,6 +70,7 @@ const LlmAdapterLive = Layer.unwrapEffect(
 
 const LlmSupportLayer = Layer.merge(GuardrailsLive, LlmAdapterLive);
 const LlmLayer = Layer.provideMerge(LlmServiceLive, LlmSupportLayer);
+const AgentExecutionLayer = Layer.provide(AgentExecutionServiceLive, MatchEmployeeUseCaseLive);
 
 const UseCaseLayer = Layer.provideMerge(
 	Layer.mergeAll(
@@ -76,6 +81,7 @@ const UseCaseLayer = Layer.provideMerge(
 		ApprovalServiceLive,
 		ConnectorsServiceStubLive,
 		AgentChatServiceLive,
+		AgentExecutionLayer,
 	),
 	RepoLayer,
 );
@@ -94,6 +100,7 @@ export type AppServices =
 	| GoalService
 	| AgentRepository
 	| AgentChatService
+	| AgentExecutionService
 	| Guardrails
 	| LlmAdapter
 	| LlmService

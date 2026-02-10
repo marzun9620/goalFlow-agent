@@ -41,6 +41,8 @@ export interface MatchOptions {
 	skillWeight?: number;
 	/** Override capacity weight for this request */
 	capacityWeight?: number;
+	/** Restrict matching to this set of people */
+	includePersonIds?: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,6 +162,7 @@ const buildUseCase = (repo: MatchingRepository, config: MatchingConfig): MatchEm
 				.listCandidates({
 					hasAnySkills: requiredSkills.map((r) => r.skillId),
 					minAvailableHours: effortHours > 0 ? effortHours : undefined,
+					includePersonIds: options?.includePersonIds,
 				})
 				.pipe(
 					Effect.mapError((cause) => new MatchingFlowError({ operation: "listCandidates", cause })),

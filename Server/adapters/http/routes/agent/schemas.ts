@@ -8,3 +8,9 @@ export const AgentChatRequestSchema = Schema.Struct({
 });
 
 export type AgentChatRequest = Schema.Schema.Type<typeof AgentChatRequestSchema>;
+
+export const AgentApproveRequestSchema = Schema.Struct({
+	idempotencyKey: NonEmptyString,
+});
+
+export type AgentApproveRequest = Schema.Schema.Type<typeof AgentApproveRequestSchema>;

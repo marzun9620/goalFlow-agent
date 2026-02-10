@@ -320,24 +320,24 @@ Parse user chat like: "New project X, add tasks A/B/C, include Sam and Maya, dis
 Turn approved proposals into real writes.
 
 **Features**
-- [ ] Implement capacity-based task distribution using existing matching/scheduling use cases
-- [ ] Add approve endpoint:
-  - [ ] `POST /api/agent/approve/:runId`
-- [ ] On approval, execute ordered actions:
-  - [ ] create/update project/goal
-  - [ ] create tasks
-  - [ ] create/update members
-  - [ ] upsert member skills
-  - [ ] assign tasks by capacity
-- [ ] Save execution results and failures per action (`AgentAction` audit trail)
+- [x] Implement capacity-based task distribution using existing matching/scheduling use cases
+- [x] Add approve endpoint:
+  - [x] `POST /api/agent/approve/:runId`
+- [x] On approval, execute ordered actions:
+  - [x] create/update project/goal
+  - [x] create tasks
+  - [x] create/update members
+  - [x] upsert member skills
+  - [x] assign tasks by capacity
+- [x] Save execution results and failures per action (`AgentAction` audit trail)
 
 **Guardrails**
-- [ ] Proposal-first default (no implicit writes)
-- [ ] Idempotency key per approval run to prevent duplicate writes
+- [x] Proposal-first default (no implicit writes)
+- [x] Idempotency key per approval run to prevent duplicate writes
 
 **Definition of done**
-- [ ] One approved run creates/upserts entities and assignments end-to-end
-- [ ] Partial failures are visible with per-action status
+- [x] One approved run creates/upserts entities and assignments end-to-end
+- [x] Partial failures are visible with per-action status
 
 ---
 

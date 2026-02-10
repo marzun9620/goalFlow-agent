@@ -55,6 +55,25 @@ export type AgentPersonRecord = {
 	}>;
 };
 
+export type AgentTaskRecord = {
+	id: string;
+	title: string;
+	effortHours: number | null;
+};
+
+export type AgentGoalRecord = {
+	id: string;
+	title: string;
+	status: string | null;
+};
+
+export type AgentAssignmentRecord = {
+	id: string;
+	taskId: string;
+	personId: string;
+	allocatedHours: number | null;
+};
+
 export interface AgentRepository {
 	createConversation: (input?: {
 		title?: string | null;
@@ -76,6 +95,60 @@ export interface AgentRepository {
 		conversationId: string,
 	) => Effect.Effect<AgentConversationSnapshot | null, AgentRepositoryError>;
 	searchPeopleByName: (name: string) => Effect.Effect<AgentPersonRecord[], AgentRepositoryError>;
+	getRunById: (runId: string) => Effect.Effect<AgentRunRecord | null, AgentRepositoryError>;
+	updateRunStatus: (
+		runId: string,
+		status: AgentRunRecord["status"],
+	) => Effect.Effect<AgentRunRecord, AgentRepositoryError>;
+	updateRunData: (
+		runId: string,
+		data: {
+			input?: unknown;
+			proposal?: unknown;
+		},
+	) => Effect.Effect<AgentRunRecord, AgentRepositoryError>;
+	createAction: (input: {
+		runId: string;
+		type: string;
+		status?: AgentActionRecord["status"];
+		payload?: unknown;
+		error?: string | null;
+	}) => Effect.Effect<AgentActionRecord, AgentRepositoryError>;
+	updateAction: (input: {
+		actionId: string;
+		status: AgentActionRecord["status"];
+		payload?: unknown;
+		error?: string | null;
+	}) => Effect.Effect<AgentActionRecord, AgentRepositoryError>;
+	upsertGoalByTitle: (input: {
+		title: string;
+		status?: string | null;
+	}) => Effect.Effect<AgentGoalRecord, AgentRepositoryError>;
+	upsertPerson: (input: {
+		personId?: string | null;
+		name: string;
+		weeklyCapacityHours?: number | null;
+	}) => Effect.Effect<AgentPersonRecord, AgentRepositoryError>;
+	upsertMemberSkill: (input: {
+		personId: string;
+		skillName: string;
+		level?: string | null;
+		years?: number | null;
+	}) => Effect.Effect<void, AgentRepositoryError>;
+	createTask: (input: {
+		title: string;
+		effortHours?: number | null;
+	}) => Effect.Effect<AgentTaskRecord, AgentRepositoryError>;
+	createTaskAssignment: (input: {
+		taskId: string;
+		personId: string;
+		allocatedHours?: number | null;
+	}) => Effect.Effect<AgentAssignmentRecord, AgentRepositoryError>;
+	incrementPersonLoad: (input: {
+		personId: string;
+		hours: number;
+	}) => Effect.Effect<void, AgentRepositoryError>;
+	getActionsByRunId: (runId: string) => Effect.Effect<AgentActionRecord[], AgentRepositoryError>;
 }
 
 export const AgentRepository = Context.GenericTag<AgentRepository>("AgentRepository");
